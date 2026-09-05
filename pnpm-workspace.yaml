@@ -1,0 +1,11 @@
+# Not a monorepo — this file exists because pnpm 10.16+ reads settings from it
+# rather than package.json. esbuild (via vitest and tsx) needs its postinstall.
+# onlyBuiltDependencies is the pnpm 10 key, allowBuilds the pnpm 11 replacement.
+packages:
+  - "."
+onlyBuiltDependencies:
+  - esbuild
+allowBuilds:
+  esbuild: true
+patchedDependencies:
+  '@render-lab/tasks-notion@0.5.0': patches/@render-lab__tasks-notion@0.5.0.patch

@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Render — links</title>
+<meta name="description" content="Cloud application hosting for developers.">
+<meta property="og:title" content="Render — links">
+<meta property="og:description" content="Cloud application hosting for developers.">
+<meta property="og:type" content="website">
+<link rel="icon" href="/assets/render-logo-black.svg" media="(prefers-color-scheme: light)">
+<link rel="icon" href="/assets/render-logo-white.svg" media="(prefers-color-scheme: dark)">
+<style>
+@font-face {
+  font-family: 'Roobert';
+  src: url('/assets/fonts/RoobertVF.woff2') format('woff2-variations');
+  font-weight: 300 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Neue Montreal';
+  src: url('/assets/fonts/PPNeueMontreal-Variable.woff2') format('woff2-variations');
+  font-weight: 300 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'PP Neue Montreal Mono';
+  src: url('/assets/fonts/PPNeueMontrealMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+
+:root {
+  --bg: #ffffff;
+  --bg-secondary: #e3e3e3;
+  --border: #e3e3e3;
+  --text: #0d0d0d;
+  --text-secondary: #4d4d4d;
+  --text-faint: #6b6b6b;
+  --text-overline: #6b6b6b;
+  --link: #8a05ff;
+  --link-hover: #48008c;
+  --link-bg: #e7dbff;
+  --accent: #8a05ff;
+  --accent-strong: #48008c;
+
+  --font-brand: 'Roobert', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-default: 'PP Neue Montreal', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'PP Neue Montreal Mono', 'Roboto Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --ease: cubic-bezier(0.9, 0.1, 0.1, 0.9);
+
+  color-scheme: light dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0d0d0d;
+    --bg-secondary: #141414;
+    --border: #272727;
+    --text: #ffffff;
+    --text-secondary: #c7c7c7;
+    --text-faint: #b3b3b3;
+    --text-overline: #b3b3b3;
+    --link: #d1b8ff;
+    --link-hover: #e7dbff;
+    --link-bg: #48008c;
+    --accent: #8a05ff;
+    --accent-strong: #c29eff;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-default);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 24px;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+.page {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 96px 32px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.masthead {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.mark { width: 48px; height: 48px; display: block; }
+.mark--dark { display: none; }
+@media (prefers-color-scheme: dark) {
+  .mark--light { display: none; }
+  .mark--dark { display: block; }
+}
+
+.name {
+  font-family: var(--font-brand);
+  font-weight: 300;
+  font-size: 40px;
+  line-height: 44px;
+  letter-spacing: -0.015em;
+  margin: 0;
+}
+
+.tagline {
+  margin: 0;
+  font-size: 18px;
+  line-height: 26px;
+  color: var(--text-secondary);
+  max-width: 40ch;
+}
+
+.overline {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-overline);
+  margin: 0 0 16px;
+}
+
+.links { display: flex; flex-direction: column; gap: 12px; }
+
+.card {
+  display: grid;
+  grid-template-columns: 20px 1fr auto;
+  align-items: start;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  text-decoration: none;
+  color: inherit;
+  min-height: 56px;
+}
+
+.card:hover { border-color: var(--text-faint); }
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.card__icon { width: 20px; height: 20px; margin-top: 2px; display: block; }
+.card__title { font-size: 16px; line-height: 24px; }
+.card__desc {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-faint);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card__arrow {
+  color: var(--text-faint);
+  line-height: 24px;
+  transition: transform 150ms var(--ease);
+}
+.card:hover .card__arrow { transform: translateX(2px); }
+
+.socials {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.social {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--link);
+  text-decoration: none;
+  position: relative;
+  padding-bottom: 2px;
+}
+
+.social::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 200ms var(--ease);
+}
+.social:hover { color: var(--link-hover); }
+.social:hover::after { transform: scaleX(1); }
+.social:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+.stamp {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
+  color: var(--text-overline);
+}
+
+@media (max-width: 767px) {
+  .page { padding: 48px 16px 40px; gap: 32px; }
+  .name { font-size: 32px; line-height: 36px; letter-spacing: -0.012em; }
+  .card { min-height: 44px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card__arrow { transition: none; }
+  .social::after { transition: none; transform: scaleX(0); }
+  .social:hover::after { transform: scaleX(1); }
+}
+</style>
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <img class="mark mark--light" src="/assets/render-logo-black.svg" alt="Render" width="48" height="48">
+      <img class="mark mark--dark" src="/assets/render-logo-white.svg" alt="" width="48" height="48" aria-hidden="true">
+      <h1 class="name">Render</h1>
+      <p class="tagline">Cloud application hosting for developers.</p>
+    </header>
+
+    <section>
+      <h2 class="overline">Links</h2>
+      <div class="links">
+      <a class="card" href="https://discord.com/invite/gWBFXry3rY">
+        <img class="card__icon" src="https://discord.com/favicon.ico" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <span>
+          <span class="card__title">Join the Render Developers Discord</span>
+          
+        </span>
+        <span class="card__arrow" aria-hidden="true">&#8594;</span>
+      </a>
+      <a class="card" href="https://render.com/startups?utm_source=linktree&amp;utm_medium=linktree">
+        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <span>
+          <span class="card__title">Funded founder? Apply to the Render startup program</span>
+          
+        </span>
+        <span class="card__arrow" aria-hidden="true">&#8594;</span>
+      </a>
+      <a class="card" href="https://render.com/?utm_source=linktree&amp;utm_medium=linktree">
+        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <span>
+          <span class="card__title">Website</span>
+          
+        </span>
+        <span class="card__arrow" aria-hidden="true">&#8594;</span>
+      </a>
+      <a class="card" href="https://render.com/tutorials/render-workflows?utm_source=linktree&amp;utm_medium=linktree">
+        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <span>
+          <span class="card__title">Tutorial | Get started with Render Workflows</span>
+          
+        </span>
+        <span class="card__arrow" aria-hidden="true">&#8594;</span>
+      </a>
+      </div>
+    </section>
+
+    <nav class="socials" aria-label="Social">
+      <a class="social" href="https://www.youtube.com/@render-inc">YouTube</a>
+      <a class="social" href="https://www.linkedin.com/company/renderco">LinkedIn</a>
+      <a class="social" href="https://x.com/render">X</a>
+    </nav>
+
+    <p class="stamp">Updated 2026-09-05</p>
+  </main>
+</body>
+</html>

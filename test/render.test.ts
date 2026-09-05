@@ -1,0 +1,137 @@
+import { describe, expect, it } from "vitest";
+import { escapeHtml, renderPage, safeUrl, type PageModel } from "../src/render.js";
+import { applyUtm, faviconUrl, toLinkRows, visibleInOrder } from "../src/links.js";
+import type { PageDTO } from "@render-lab/tasks-notion";
+
+const model: PageModel = {
+  name: "Render",
+  tagline: "Cloud application hosting for developers.",
+  overline: "Links",
+  generatedAt: "2026-09-04T12:00:00.000Z",
+  cards: [
+    { title: "First", url: "https://example.com/a", description: "A", iconUrl: "https://example.com/favicon.ico" },
+    { title: "Second", url: "https://example.com/b", description: "", iconUrl: "" },
+  ],
+  socials: [{ label: "X", url: "https://x.com/render" }],
+};
+
+describe("renderPage", () => {
+  it("emits every card in model order", () => {
+    const html = renderPage(model);
+    expect(html.indexOf("First")).toBeLessThan(html.indexOf("Second"));
+    expect(html).toContain('href="https://example.com/a"');
+    expect(html).toContain('href="https://x.com/render"');
+  });
+
+  it("omits the description paragraph when there is no description", () => {
+    expect(renderPage(model).match(/class="card__desc"/g)).toHaveLength(1);
+  });
+
+  it("escapes titles and descriptions", () => {
+    const html = renderPage({
+      ...model,
+      cards: [{ title: '<script>alert(1)</script>', url: "https://example.com", description: 'a "b" & c', iconUrl: "" }],
+    });
+    expect(html).not.toContain("<script>alert(1)</script>");
+    expect(html).toContain("&lt;script&gt;alert(1)&lt;/script&gt;");
+    expect(html).toContain("a &quot;b&quot; &amp; c");
+  });
+
+  it("drops a javascript: href", () => {
+    const html = renderPage({
+      ...model,
+      cards: [{ title: "Bad", url: "javascript:alert(1)", description: "", iconUrl: "" }],
+    });
+    expect(html).not.toContain("javascript:");
+    expect(html).toContain('href="#"');
+  });
+
+  it("renders the socials block only when there are socials", () => {
+    expect(renderPage({ ...model, socials: [] })).not.toContain('class="socials"');
+  });
+
+  it("stamps the run date", () => {
+    expect(renderPage(model)).toContain("Updated 2026-09-04");
+  });
+
+  it("declares both color schemes and no bold weight", () => {
+    const html = renderPage(model);
+    expect(html).toContain("@media (prefers-color-scheme: dark)");
+    expect(html).toContain("prefers-reduced-motion");
+    expect(html).not.toMatch(/font-weight:\s*(600|700|800|900|bold)/);
+  });
+});
+
+describe("escapeHtml / safeUrl", () => {
+  it("escapes the five HTML-significant characters", () => {
+    expect(escapeHtml(`<>&"'`)).toBe("&lt;&gt;&amp;&quot;&#39;");
+  });
+
+  it("passes http and https through and rejects everything else", () => {
+    expect(safeUrl("https://render.com/")).toBe("https://render.com/");
+    expect(safeUrl("data:text/html,x")).toBe("#");
+    expect(safeUrl("not a url")).toBe("#");
+  });
+});
+
+describe("applyUtm", () => {
+  it("adds the corrected parameters to render.com URLs", () => {
+    expect(applyUtm("https://render.com/startups")).toBe(
+      "https://render.com/startups?utm_source=linktree&utm_medium=linktree",
+    );
+  });
+
+  it("leaves other hosts alone", () => {
+    expect(applyUtm("https://discord.com/invite/x")).toBe("https://discord.com/invite/x");
+  });
+
+  it("merges with an existing query string instead of appending a second ?", () => {
+    const out = applyUtm("https://render.com/x?a=1");
+    expect(out).toBe("https://render.com/x?a=1&utm_source=linktree&utm_medium=linktree");
+    expect(out.match(/\?/g)).toHaveLength(1);
+  });
+});
+
+describe("faviconUrl", () => {
+  it("points at the origin root", () => {
+    expect(faviconUrl("https://render.com/tutorials/x")).toBe("https://render.com/favicon.ico");
+  });
+});
+
+function page(props: Record<string, unknown>, title: string): PageDTO {
+  return {
+    id: "p",
+    url: "https://www.notion.so/p",
+    title,
+    properties: props as PageDTO["properties"],
+    createdTime: "",
+    lastEditedTime: "",
+  };
+}
+
+describe("toLinkRows / visibleInOrder", () => {
+  const pages = [
+    page({ URL: "https://b.example", Order: 2, Visible: true, Kind: "Link" }, "B"),
+    page({ URL: "https://a.example", Order: 1, Visible: true, Kind: "Link" }, "A"),
+    page({ URL: "https://hidden.example", Order: 3, Visible: false, Kind: "Link" }, "Hidden"),
+    page({ URL: "https://x.com/render", Order: 10, Visible: true, Kind: "Social" }, "X"),
+    page({ URL: "", Order: 4, Visible: true, Kind: "Link" }, "No URL"),
+  ];
+
+  it("reads the URL property, not the Notion page URL", () => {
+    expect(toLinkRows(pages)[0]?.url).toBe("https://b.example");
+  });
+
+  it("skips rows with no URL", () => {
+    expect(toLinkRows(pages).map((r) => r.title)).not.toContain("No URL");
+  });
+
+  it("sorts by Order and drops hidden rows", () => {
+    expect(visibleInOrder(toLinkRows(pages)).map((r) => r.title)).toEqual(["A", "B", "X"]);
+  });
+
+  it("reads Kind as a social flag", () => {
+    const social = visibleInOrder(toLinkRows(pages)).find((r) => r.title === "X");
+    expect(social?.kind).toBe("social");
+  });
+});

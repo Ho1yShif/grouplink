@@ -1,0 +1,58 @@
+# Blueprint for everything except the Workflow: the static site the page is served
+# from, the Key Value instance that caches scraped metadata, and the cron job that
+# starts the daily rebuild. Blueprints don't support Workflows yet, so create the
+# Workflow service in the Dashboard and set its env vars there — including
+# REDIS_URL, copied from this Key Value instance's internal connection string.
+#
+# Order: apply this Blueprint, create the Workflow, then set WORKFLOW_SLUG and
+# RENDER_STATIC_SITE_ID.
+services:
+  # The page. autoDeploy is off because grouplink.rebuild triggers the deploy
+  # itself, right after it commits the new index.html.
+  - type: web
+    name: grouplink-site
+    runtime: static
+    buildCommand: ""
+    staticPublishPath: ./site
+    autoDeployTrigger: "off"
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /assets/fonts/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+
+  - type: cron
+    name: grouplink-rebuild
+    runtime: node
+    plan: starter
+    region: oregon
+    schedule: "0 13 * * *"
+    buildCommand: pnpm install && pnpm build
+    startCommand: node dist/cron-trigger.js
+    autoDeployTrigger: commit
+    buildFilter:
+      paths:
+        - src/**
+        - package.json
+        - pnpm-lock.yaml
+        - render.yaml
+    envVars:
+      - key: RENDER_API_KEY
+        sync: false
+      - key: WORKFLOW_SLUG
+        sync: false
+      - key: CRON_TASK
+        value: grouplink.rebuild
+
+  - type: keyvalue
+    name: grouplink-cache
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+    # Private network only. The Workflow reaches it over the internal URL.
+    ipAllowList: []
