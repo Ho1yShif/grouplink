@@ -35,6 +35,9 @@ interface CachedMeta {
   description: string;
 }
 
+const EMPTY_META: CachedMeta = { description: "" };
+
+
 interface SiteFile {
   path: string;
   content: string;
@@ -71,48 +74,49 @@ export const rebuild = task(
     ]);
 
     const people = toPersonRows(peoplePages);
-    const pages = groupByPerson(visibleInOrder(toLinkRows(linkPages)), people);
     if (!people.some((person) => person.slug === cfg.defaultSlug)) {
       throw new Error(
         `SITE_DEFAULT_SLUG is "${cfg.defaultSlug}", which matches no Slug in the People database`,
       );
     }
+    const pages = groupByPerson(visibleInOrder(toLinkRows(linkPages)), people);
 
     // A link on three pages is one URL to look up, scrape, and health-check.
     const rows = pages.flatMap((page) => page.rows);
     const cardUrls = uniqueUrls(rows.filter((row) => row.kind === "link"));
+    const socialUrls = uniqueUrls(rows.filter((row) => row.kind === "social"));
     const allUrls = uniqueUrls(rows);
 
     // 2) Parallel fan-out: look for each card's metadata in Key Value first.
+    const metaByUrl = new Map<string, CachedMeta>();
     const cached = await Promise.all(
       cardUrls.map((url) => ctx.run(kvGet, { key: metaCacheKey(url) })),
     );
+    cardUrls.forEach((url, i) => {
+      const hit = readCached(cached[i]?.value);
+      if (hit) metaByUrl.set(url, hit);
+    });
 
     // 3) Parallel fan-out: scrape only the misses.
-    const missUrls = cardUrls.filter((_, i) => readCached(cached[i]?.value) === null);
+    const missUrls = cardUrls.filter((url) => !metaByUrl.has(url));
     const scraped = await Promise.all(
       missUrls.map((url) => ctx.run(extractPageMetadata, { url })),
     );
+    const scrapedMeta = missUrls.map(
+      (_url, i): CachedMeta => ({ description: cardDescription(scraped[i] ?? {}) }),
+    );
+    missUrls.forEach((url, i) => metaByUrl.set(url, scrapedMeta[i] ?? EMPTY_META));
 
     // 4) Parallel fan-out: write the fresh metadata back with a TTL.
     await Promise.all(
       missUrls.map((url, i) =>
         ctx.run(kvSet, {
           key: metaCacheKey(url),
-          value: JSON.stringify({ description: cardDescription(scraped[i] ?? {}) }),
+          value: JSON.stringify(scrapedMeta[i] ?? EMPTY_META),
           ttlSeconds: cfg.cacheTtlSeconds,
         }),
       ),
     );
-
-    const metaByUrl = new Map<string, CachedMeta>();
-    cardUrls.forEach((url, i) => {
-      const hit = readCached(cached[i]?.value);
-      if (hit) metaByUrl.set(url, hit);
-    });
-    missUrls.forEach((url, i) => {
-      metaByUrl.set(url, { description: cardDescription(scraped[i] ?? {}) });
-    });
 
     // 5) Parallel fan-out: health-check every link. tasks-http has no HEAD method,
     //    so this is a GET whose body we discard.
@@ -139,7 +143,7 @@ export const rebuild = task(
     const result: RebuildResult = {
       pageCount: pages.length,
       linkCount: cardUrls.length,
-      socialCount: allUrls.length - cardUrls.length,
+      socialCount: socialUrls.length,
       cacheHits: cardUrls.length - missUrls.length,
       deadLinks,
       committed: false,
@@ -212,13 +216,12 @@ export const rebuild = task(
     return result;
   },
 );
-
 function readCached(value: string | null | undefined): CachedMeta | null {
   if (!value) return null;
   try {
     const parsed: unknown = JSON.parse(value);
     if (parsed && typeof parsed === "object" && "description" in parsed) {
-      return { description: String((parsed as CachedMeta).description ?? "") };
+      return { description: String(parsed.description ?? "") };
     }
   } catch {
     // A malformed cache entry is a miss, not a failure.

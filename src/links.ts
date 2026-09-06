@@ -53,7 +53,7 @@ export function toLinkRows(pages: PageDTO[]): LinkRow[] {
     const visible = props["Visible"] !== false;
     const kind = readString(props["Kind"]).toLowerCase() === "social" ? "social" : "link";
     const related = props["People"];
-    const personIds = Array.isArray(related) ? related.map(String) : [];
+    const personIds = Array.isArray(related) ? related : [];
 
     rows.push({ title, url, order, visible, kind, personIds });
   }

@@ -11,6 +11,6 @@ import { task, type TaskContext } from "@renderinc/sdk/workflows";
 import "./rebuild.js";
 
 // Zero-dep smoke task, handy for verifying the service is live.
-task({ name: "ping" }, function ping(ctx: TaskContext): string {
+task({ name: "ping" }, function ping(_ctx: TaskContext): string {
   return "pong";
 });
