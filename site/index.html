@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https:; style-src 'sha256-LYxyfnXAco5UU4TmbNfU6fW4CzvML8tbMCqQJ61VN7w='; script-src 'sha256-nsmyq4665IeAl+Jlo+x36bCB9QoTOCItVFJQEtSIlhM='; font-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Render — links</title>
 <meta name="description" content="Cloud application hosting for developers.">
 <meta property="og:title" content="Render — links">
@@ -156,6 +157,7 @@ body {
 .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .card__icon { width: 20px; height: 20px; margin-top: 2px; display: block; }
+.card__icon--broken { visibility: hidden; }
 .card__title { font-size: 16px; line-height: 24px; }
 .card__desc {
   margin: 4px 0 0;
@@ -238,7 +240,7 @@ body {
 <body>
   <main class="page">
     <header class="masthead">
-      <img class="mark mark--light" src="/assets/render-logo-black.svg" alt="Render" width="48" height="48">
+      <img class="mark mark--light" src="/assets/render-logo-black.svg" alt="" width="48" height="48" aria-hidden="true">
       <img class="mark mark--dark" src="/assets/render-logo-white.svg" alt="" width="48" height="48" aria-hidden="true">
       <h1 class="name">Render</h1>
       <p class="tagline">Cloud application hosting for developers.</p>
@@ -248,7 +250,7 @@ body {
       <h2 class="overline">Links</h2>
       <div class="links">
       <a class="card" href="https://discord.com/invite/gWBFXry3rY">
-        <img class="card__icon" src="https://discord.com/favicon.ico" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <img class="card__icon" src="https://discord.com/favicon.ico" alt="" loading="lazy">
         <span>
           <span class="card__title">Join the Render Developers Discord</span>
           
@@ -256,7 +258,7 @@ body {
         <span class="card__arrow" aria-hidden="true">&#8594;</span>
       </a>
       <a class="card" href="https://render.com/startups?utm_source=linktree&amp;utm_medium=linktree">
-        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy">
         <span>
           <span class="card__title">Funded founder? Apply to the Render startup program</span>
           
@@ -264,7 +266,7 @@ body {
         <span class="card__arrow" aria-hidden="true">&#8594;</span>
       </a>
       <a class="card" href="https://render.com/?utm_source=linktree&amp;utm_medium=linktree">
-        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy">
         <span>
           <span class="card__title">Website</span>
           
@@ -272,7 +274,7 @@ body {
         <span class="card__arrow" aria-hidden="true">&#8594;</span>
       </a>
       <a class="card" href="https://render.com/tutorials/render-workflows?utm_source=linktree&amp;utm_medium=linktree">
-        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
+        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy">
         <span>
           <span class="card__title">Tutorial | Get started with Render Workflows</span>
           
@@ -288,7 +290,15 @@ body {
       <a class="social" href="https://x.com/render">X</a>
     </nav>
 
-    <p class="stamp">Updated 2026-09-05</p>
+    <p class="stamp">Updated 2026-09-06</p>
   </main>
+<script>
+addEventListener('error', function (event) {
+  var el = event.target;
+  if (el instanceof HTMLImageElement && el.classList.contains('card__icon')) {
+    el.classList.add('card__icon--broken');
+  }
+}, true);
+</script>
 </body>
 </html>

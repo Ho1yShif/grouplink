@@ -5,6 +5,13 @@
 // :root with a dark override, Roobert Light for the name, PP Neue Montreal for
 // prose, PP Neue Montreal Mono for the overline and socials, square corners,
 // 1px hairlines, purple reserved for links and focus.
+//
+// The page carries its own Content-Security-Policy, with the inline style and
+// script blocks allowed by hash. Adding either one anywhere but STYLES or
+// ICON_FALLBACK_SCRIPT will be blocked by the browser. The policy is a meta tag
+// rather than a render.yaml header so the hashes cannot drift from the content
+// they cover.
+import { createHash } from "node:crypto";
 
 export interface LinkCard {
   /** Display text. Comes from Notion, not from the scrape. */
@@ -201,6 +208,7 @@ body {
 .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 .card__icon { width: 20px; height: 20px; margin-top: 2px; display: block; }
+.card__icon--broken { visibility: hidden; }
 .card__title { font-size: 16px; line-height: 24px; }
 .card__desc {
   margin: 4px 0 0;
@@ -280,6 +288,36 @@ body {
 }
 `;
 
+/**
+ * A favicon that 404s leaves a broken-image glyph, and no CSS selector matches a
+ * failed image. `error` does not bubble, so the listener runs in the capture phase.
+ * It adds a class instead of writing el.style, which the policy would have to allow.
+ */
+const ICON_FALLBACK_SCRIPT = `
+addEventListener('error', function (event) {
+  var el = event.target;
+  if (el instanceof HTMLImageElement && el.classList.contains('card__icon')) {
+    el.classList.add('card__icon--broken');
+  }
+}, true);
+`;
+
+/** CSP source expression for an inline block, so the policy allows it by hash. */
+function sha256Source(content: string): string {
+  return `'sha256-${createHash("sha256").update(content, "utf8").digest("base64")}'`;
+}
+
+const CSP = [
+  "default-src 'none'",
+  // Favicons are fetched from whatever origin the link points at, over TLS only.
+  "img-src https:",
+  `style-src ${sha256Source(STYLES)}`,
+  `script-src ${sha256Source(ICON_FALLBACK_SCRIPT)}`,
+  "font-src 'self'",
+  "base-uri 'none'",
+  "form-action 'none'",
+].join("; ");
+
 function renderCard(card: LinkCard): string {
   const href = escapeHtml(safeUrl(card.url));
   const title = escapeHtml(card.title);
@@ -287,7 +325,7 @@ function renderCard(card: LinkCard): string {
     ? `<p class="card__desc">${escapeHtml(card.description)}</p>`
     : "";
   const icon = card.iconUrl
-    ? `<img class="card__icon" src="${escapeHtml(safeUrl(card.iconUrl))}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">`
+    ? `<img class="card__icon" src="${escapeHtml(safeUrl(card.iconUrl))}" alt="" loading="lazy">`
     : `<span class="card__icon"></span>`;
   return `      <a class="card" href="${href}">
         ${icon}
@@ -317,6 +355,7 @@ ${socials}
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="${CSP}">
 <title>${escapeHtml(model.name)} — links</title>
 <meta name="description" content="${escapeHtml(model.tagline)}">
 <meta property="og:title" content="${escapeHtml(model.name)} — links">
@@ -329,7 +368,7 @@ ${socials}
 <body>
   <main class="page">
     <header class="masthead">
-      <img class="mark mark--light" src="/assets/render-logo-black.svg" alt="${escapeHtml(model.name)}" width="48" height="48">
+      <img class="mark mark--light" src="/assets/render-logo-black.svg" alt="" width="48" height="48" aria-hidden="true">
       <img class="mark mark--dark" src="/assets/render-logo-white.svg" alt="" width="48" height="48" aria-hidden="true">
       <h1 class="name">${escapeHtml(model.name)}</h1>
       <p class="tagline">${escapeHtml(model.tagline)}</p>
@@ -346,6 +385,7 @@ ${socialsBlock}
 
     <p class="stamp">Updated ${escapeHtml(model.generatedAt.slice(0, 10))}</p>
   </main>
+<script>${ICON_FALLBACK_SCRIPT}</script>
 </body>
 </html>
 `;

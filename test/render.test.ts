@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { escapeHtml, renderPage, safeUrl, type PageModel } from "../src/render.js";
 import { applyUtm, faviconUrl, toLinkRows, visibleInOrder } from "../src/links.js";
@@ -59,6 +60,45 @@ describe("renderPage", () => {
     expect(html).toContain("@media (prefers-color-scheme: dark)");
     expect(html).toContain("prefers-reduced-motion");
     expect(html).not.toMatch(/font-weight:\s*(600|700|800|900|bold)/);
+  });
+});
+
+describe("content security policy", () => {
+  function firstGroup(pattern: RegExp, html: string, what: string): string {
+    const group = pattern.exec(html)?.[1];
+    if (group === undefined) throw new Error(`expected ${what} in the page`);
+    return group;
+  }
+
+  function inlineBlock(html: string, tag: "style" | "script"): string {
+    return firstGroup(
+      new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`),
+      html,
+      `one inline <${tag}> block`,
+    );
+  }
+
+  function policy(html: string): string {
+    return firstGroup(
+      /<meta http-equiv="Content-Security-Policy" content="([^"]*)">/,
+      html,
+      "a CSP meta tag",
+    );
+  }
+
+  function sha256(content: string): string {
+    return `sha256-${createHash("sha256").update(content, "utf8").digest("base64")}`;
+  }
+
+  it("allows the inline style and script blocks it actually emits", () => {
+    const html = renderPage(model);
+    const csp = policy(html);
+    expect(csp).toContain(`style-src '${sha256(inlineBlock(html, "style"))}'`);
+    expect(csp).toContain(`script-src '${sha256(inlineBlock(html, "script"))}'`);
+  });
+
+  it("emits no inline event handlers, which no hash can allow", () => {
+    expect(renderPage(model)).not.toMatch(/\son[a-z]+=/);
   });
 });
 
