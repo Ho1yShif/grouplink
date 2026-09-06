@@ -1,0 +1,67 @@
+// loadConfig reads only the env it is handed, so each case passes its own.
+import { describe, expect, it } from "vitest";
+import { assertWritable, loadConfig } from "../src/config.js";
+
+const ENV = {
+  NOTION_LINKS_DATABASE_ID: "db_links",
+  NOTION_PEOPLE_DATABASE_ID: "db_people",
+  SITE_DEFAULT_SLUG: "shifra",
+};
+
+const load = (extra: Record<string, string> = {}) => loadConfig({}, { ...ENV, ...extra });
+
+describe("loadConfig", () => {
+  it("defaults dryRun to true, so an unconfigured run cannot publish", () => {
+    expect(load().dryRun).toBe(true);
+  });
+
+  it("reads DRY_RUN whatever the casing and spacing", () => {
+    for (const value of ["false", "False", "FALSE", " off ", "no", "0"]) {
+      expect(load({ DRY_RUN: value }).dryRun, value).toBe(false);
+    }
+    for (const value of ["true", "TRUE", "1", "yes"]) {
+      expect(load({ DRY_RUN: value }).dryRun, value).toBe(true);
+    }
+  });
+
+  it("falls back when DRY_RUN is empty or whitespace", () => {
+    expect(load({ DRY_RUN: "" }).dryRun).toBe(true);
+    expect(load({ DRY_RUN: "   " }).dryRun).toBe(true);
+  });
+
+  it("prefers the run input over the env", () => {
+    expect(loadConfig({ dryRun: false }, { ...ENV, DRY_RUN: "true" }).dryRun).toBe(false);
+  });
+
+  it("lowercases the default slug and strips trailing slashes from the site dir", () => {
+    const cfg = load({ SITE_DEFAULT_SLUG: " Shifra ", SITE_DIR: "site///" });
+    expect(cfg.defaultSlug).toBe("shifra");
+    expect(cfg.siteDir).toBe("site");
+  });
+
+  it("names the variable that is missing", () => {
+    expect(() => loadConfig({}, {})).toThrow(/NOTION_LINKS_DATABASE_ID/);
+    expect(() => loadConfig({}, { NOTION_LINKS_DATABASE_ID: "x" })).toThrow(
+      /NOTION_PEOPLE_DATABASE_ID/,
+    );
+    expect(() => loadConfig({}, { ...ENV, SITE_DEFAULT_SLUG: "" })).toThrow(/SITE_DEFAULT_SLUG/);
+  });
+});
+
+describe("assertWritable", () => {
+  const WRITE_ENV = {
+    GITHUB_REPO_OWNER: "acme",
+    GITHUB_REPO_NAME: "links",
+    RENDER_STATIC_SITE_ID: "srv-1",
+  };
+
+  it("passes once the write path is configured", () => {
+    expect(() => assertWritable(load(WRITE_ENV))).not.toThrow();
+  });
+
+  it("names every variable a commit would need", () => {
+    expect(() => assertWritable(load())).toThrow(
+      /GITHUB_REPO_OWNER, GITHUB_REPO_NAME, RENDER_STATIC_SITE_ID/,
+    );
+  });
+});

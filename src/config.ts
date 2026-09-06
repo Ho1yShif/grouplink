@@ -36,9 +36,16 @@ export interface RebuildConfig {
   siteUrl: string;
 }
 
+const FALSY = new Set(["false", "0", "no", "off"]);
+
+/**
+ * Case-insensitive, because DRY_RUN guards the commit, the deploy, and the Slack
+ * post — reading `False` as true would publish a run the operator meant to hold.
+ */
 function envFlag(value: string | undefined, fallback: boolean): boolean {
-  if (value === undefined || value === "") return fallback;
-  return value !== "false" && value !== "0";
+  const normalized = value?.trim().toLowerCase() ?? "";
+  if (normalized === "") return fallback;
+  return !FALSY.has(normalized);
 }
 
 function envInt(value: string | undefined, fallback: number): number {
