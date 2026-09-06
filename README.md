@@ -28,8 +28,9 @@ grouplink.rebuild
 ```
 
 Every `ctx.run` is a separate durable run with the owning package's retry policy.
-The `×N` steps fan out into independent chained runs. The URLs are deduplicated
-first, so a link on three pages is scraped and health-checked once.
+The `×N` steps fan out into independent chained runs, ten at a time, so a large
+database does not open one run per link or hit every site at once. The URLs are
+deduplicated first, so a link on three pages is scraped and health-checked once.
 
 `DRY_RUN=true` is the default. A dry run reads, scrapes, caches, and health-checks,
 then returns the model without committing or deploying.

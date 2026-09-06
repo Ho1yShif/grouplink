@@ -2,8 +2,8 @@
 // render one page each, commit the pages that changed, deploy, and say so in Slack.
 //
 // Every `await ctx.run(...)` below is a separate durable run on its own instance,
-// with that package's retry policy, tracked in the dashboard. The Promise.all calls
-// fan out into independent chained runs.
+// with that package's retry policy, tracked in the dashboard. The per-URL stages fan
+// out through mapInBatches, so the run opens at most BATCH_SIZE of them at a time.
 import { task, type TaskContext } from "@renderinc/sdk/workflows";
 import { queryDatabase } from "@render-lab/tasks-notion";
 import { extractPageMetadata } from "@render-lab/tasks-scrape";
@@ -36,6 +36,12 @@ interface CachedMeta {
 }
 
 const EMPTY_META: CachedMeta = { description: "" };
+
+/**
+ * Fan-out width for the per-URL stages. Without it a 100-row database opens 100
+ * concurrent runs per stage and hits every linked site at once.
+ */
+const BATCH_SIZE = 10;
 
 
 interface SiteFile {
@@ -87,41 +93,39 @@ export const rebuild = task(
     const socialUrls = uniqueUrls(rows.filter((row) => row.kind === "social"));
     const allUrls = uniqueUrls(rows);
 
-    // 2) Parallel fan-out: look for each card's metadata in Key Value first.
+    // 2) Batched fan-out: look for each card's metadata in Key Value first.
     const metaByUrl = new Map<string, CachedMeta>();
-    const cached = await Promise.all(
-      cardUrls.map((url) => ctx.run(kvGet, { key: metaCacheKey(url) })),
+    const cached = await mapInBatches(cardUrls, (url) =>
+      ctx.run(kvGet, { key: metaCacheKey(url) }),
     );
     cardUrls.forEach((url, i) => {
       const hit = readCached(cached[i]?.value);
       if (hit) metaByUrl.set(url, hit);
     });
 
-    // 3) Parallel fan-out: scrape only the misses.
+    // 3) Batched fan-out: scrape only the misses.
     const missUrls = cardUrls.filter((url) => !metaByUrl.has(url));
-    const scraped = await Promise.all(
-      missUrls.map((url) => ctx.run(extractPageMetadata, { url })),
+    const scraped = await mapInBatches(missUrls, (url) =>
+      ctx.run(extractPageMetadata, { url }),
     );
     const scrapedMeta = missUrls.map(
       (_url, i): CachedMeta => ({ description: cardDescription(scraped[i] ?? {}) }),
     );
     missUrls.forEach((url, i) => metaByUrl.set(url, scrapedMeta[i] ?? EMPTY_META));
 
-    // 4) Parallel fan-out: write the fresh metadata back with a TTL.
-    await Promise.all(
-      missUrls.map((url, i) =>
-        ctx.run(kvSet, {
-          key: metaCacheKey(url),
-          value: JSON.stringify(scrapedMeta[i] ?? EMPTY_META),
-          ttlSeconds: cfg.cacheTtlSeconds,
-        }),
-      ),
+    // 4) Batched fan-out: write the fresh metadata back with a TTL.
+    await mapInBatches(missUrls, (url, i) =>
+      ctx.run(kvSet, {
+        key: metaCacheKey(url),
+        value: JSON.stringify(scrapedMeta[i] ?? EMPTY_META),
+        ttlSeconds: cfg.cacheTtlSeconds,
+      }),
     );
 
-    // 5) Parallel fan-out: health-check every link. tasks-http has no HEAD method,
+    // 5) Batched fan-out: health-check every link. tasks-http has no HEAD method,
     //    so this is a GET whose body we discard.
-    const checks = await Promise.all(
-      allUrls.map((url) => ctx.run(request, { method: "GET" as const, url })),
+    const checks = await mapInBatches(allUrls, (url) =>
+      ctx.run(request, { method: "GET" as const, url }),
     );
     const deadLinks = allUrls
       .map((url, i) => ({ url, check: checks[i] }))
@@ -158,7 +162,7 @@ export const rebuild = task(
     if (cfg.dryRun) return result;
     assertWritable(cfg);
 
-    // 7) Chained run, then a fan-out: compare each page against what the branch
+    // 7) Chained run, then a batched fan-out: compare each page against what the branch
     //    already holds, so a quiet day produces no commit and no deploy. listTree
     //    comes first because getFileContents throws a 404 on a path that doesn't
     //    exist yet, and a new person's page never does.
@@ -166,8 +170,8 @@ export const rebuild = task(
     const tree = await ctx.run(listTree, { repo, ref: cfg.branch });
     const onBranch = new Set(tree.paths);
     const existing = files.filter((file) => onBranch.has(file.path));
-    const currents = await Promise.all(
-      existing.map((file) => ctx.run(getFileContents, { repo, path: file.path, ref: cfg.branch })),
+    const currents = await mapInBatches(existing, (file) =>
+      ctx.run(getFileContents, { repo, path: file.path, ref: cfg.branch }),
     );
     const currentByPath = new Map(existing.map((file, i) => [file.path, currents[i]?.content ?? ""]));
 
@@ -216,6 +220,20 @@ export const rebuild = task(
     return result;
   },
 );
+/** Promise.all in fixed-size batches, in input order. */
+async function mapInBatches<T, R>(
+  items: T[],
+  fn: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = [];
+  for (let start = 0; start < items.length; start += BATCH_SIZE) {
+    const batch = items.slice(start, start + BATCH_SIZE);
+    results.push(...(await Promise.all(batch.map((item, i) => fn(item, start + i)))));
+  }
+  return results;
+}
+
+
 function readCached(value: string | null | undefined): CachedMeta | null {
   if (!value) return null;
   try {

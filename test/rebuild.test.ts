@@ -19,7 +19,7 @@ const ENV = {
   NOTION_LINKS_DATABASE_ID: "db_links",
   NOTION_PEOPLE_DATABASE_ID: "db_people",
   SITE_DEFAULT_SLUG: "shifra",
-  GITHUB_REPO_OWNER: "Ho1yShif",
+  GITHUB_REPO_OWNER: "acme",
   GITHUB_REPO_NAME: "grouplink",
   RENDER_STATIC_SITE_ID: "srv-1",
   SITE_URL: "https://grouplink.onrender.com",
@@ -101,16 +101,26 @@ interface Fakes {
   current?: Record<string, string>;
   /** Paths github.listTree reports, when they differ from `current`'s keys. */
   onBranch?: string[];
+  /** Raw link rows, when a case needs more or fewer than LINK_PAGES. */
+  links?: ReturnType<typeof rawPage>[];
 }
 
 function harness(fakes: Fakes = {}) {
-  const scrapeFetch = vi.fn(async (url: string) => ({
-    url,
-    status: 200,
-    ok: true,
-    contentType: "text/html",
-    body: `<html><head><title>T</title><meta name="description" content="desc for ${url}"></head></html>`,
-  }));
+  let inFlight = 0;
+  let peakInFlight = 0;
+  const scrapeFetch = vi.fn(async (url: string) => {
+    inFlight += 1;
+    peakInFlight = Math.max(peakInFlight, inFlight);
+    await Promise.resolve();
+    inFlight -= 1;
+    return {
+      url,
+      status: 200,
+      ok: true,
+      contentType: "text/html",
+      body: `<html><head><title>T</title><meta name="description" content="desc for ${url}"></head></html>`,
+    };
+  });
   const kvSet = vi.fn(async (_k: string, _v: string, _ttl?: number) => {});
   const createBlob = vi.fn(async () => ({ sha: "blob1" }));
   const createTree = vi.fn(async () => ({ sha: "tree1" }));
@@ -134,7 +144,7 @@ function harness(fakes: Fakes = {}) {
   const routes: Record<string, (args: unknown) => Promise<unknown>> = {
     "notion.queryDatabase": (a) => {
       const { databaseId } = a as { databaseId: string };
-      const rows = databaseId === "db_people" ? PEOPLE_PAGES : LINK_PAGES;
+      const rows = databaseId === "db_people" ? PEOPLE_PAGES : (fakes.links ?? LINK_PAGES);
       return queryDatabaseImpl(ctx, a as never, {
         notion: { queryDatabase: async () => rows } as never,
       });
@@ -233,6 +243,7 @@ function harness(fakes: Fakes = {}) {
   return {
     ctx,
     scrapeFetch,
+    peak: () => peakInFlight,
     kvSet,
     createBlob,
     createTree,
@@ -431,6 +442,18 @@ describe("grouplink.rebuild", () => {
     const result = await withEnv({ DRY_RUN: "false" }, () => rebuild.func(second.ctx, {}));
 
     expect(result.changedPaths).toEqual(["site/alex/index.html"]);
+  });
+
+  it("scrapes in batches instead of opening one run per link", async () => {
+    const links = Array.from({ length: 25 }, (_, i) =>
+      rawPage(`Link ${i}`, `https://example.com/${i}`, i, true, "Link"),
+    );
+    const h = harness({ links });
+    const result = await withEnv({ DRY_RUN: "false" }, () => rebuild.func(h.ctx, {}));
+
+    expect(result.linkCount).toBe(25);
+    expect(h.scrapeFetch).toHaveBeenCalledTimes(25);
+    expect(h.peak()).toBeLessThanOrEqual(10);
   });
 
   it("writes nothing on a dry run", async () => {
