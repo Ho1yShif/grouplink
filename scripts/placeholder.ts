@@ -2,6 +2,7 @@
 // The workflow overwrites this file on its first real run; it exists so the static
 // site has something to serve before then. Run with `pnpm placeholder`.
 import { writeFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { applyUtm, faviconUrl } from "../src/links.js";
 import { renderPage, type LinkCard } from "../src/render.js";
 
@@ -32,5 +33,6 @@ const html = renderPage({
   ],
 });
 
-writeFileSync("site/index.html", html);
-console.log(`wrote site/index.html (${html.length} bytes)`);
+const outPath = fileURLToPath(new URL("../site/index.html", import.meta.url));
+writeFileSync(outPath, html);
+console.log(`wrote ${outPath} (${html.length} bytes)`);
