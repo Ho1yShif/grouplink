@@ -32,6 +32,10 @@ The `×N` steps fan out into independent chained runs, ten at a time, so a large
 database does not open one run per link or hit every site at once. The URLs are
 deduplicated first, so a link on three pages is scraped and health-checked once.
 
+The health check counts a link as dead when it answers 404, 5xx, or nothing at all.
+A 401, 403, 405, 429, or 999 means the site is up and refusing a request with no
+browser fingerprint, which is what X and LinkedIn do.
+
 `DRY_RUN=true` is the default. A dry run reads, scrapes, caches, and health-checks,
 then returns the model without committing or deploying.
 

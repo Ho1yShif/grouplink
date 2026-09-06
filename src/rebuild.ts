@@ -43,6 +43,11 @@ const EMPTY_META: CachedMeta = { description: "" };
  */
 const BATCH_SIZE = 10;
 
+/**
+ * Statuses that mean the URL resolved but refused an unadorned GET. X answers 403 and
+ * LinkedIn answers 999 for a request with no browser fingerprint, so neither is dead.
+ */
+const REFUSED_STATUSES = new Set([401, 403, 405, 429, 999]);
 
 interface SiteFile {
   path: string;
@@ -129,7 +134,7 @@ export const rebuild = task(
     );
     const deadLinks = allUrls
       .map((url, i) => ({ url, check: checks[i] }))
-      .filter(({ check }) => !check?.ok)
+      .filter(({ check }) => unreachable(check))
       .map(({ url, check }) => `${url} (${check?.status ?? "no response"})`);
 
     // 6) Render one file per person, plus a second copy of the default person's page
@@ -233,6 +238,10 @@ async function mapInBatches<T, R>(
   return results;
 }
 
+function unreachable(check: { ok: boolean; status: number } | undefined): boolean {
+  if (!check) return true;
+  return !check.ok && !REFUSED_STATUSES.has(check.status);
+}
 
 function readCached(value: string | null | undefined): CachedMeta | null {
   if (!value) return null;

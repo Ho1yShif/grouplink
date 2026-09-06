@@ -456,6 +456,12 @@ describe("grouplink.rebuild", () => {
     expect(h.peak()).toBeLessThanOrEqual(10);
   });
 
+  it("does not call a link dead when the site refuses a bot GET", async () => {
+    const h = harness({ statuses: { "https://x.com/render": 403 } });
+    const result = await withEnv({ DRY_RUN: "false" }, () => rebuild.func(h.ctx, {}));
+    expect(result.deadLinks).toEqual([]);
+  });
+
   it("writes nothing on a dry run", async () => {
     const h = harness();
     const result = await withEnv({ DRY_RUN: "true" }, () => rebuild.func(h.ctx, {}));
