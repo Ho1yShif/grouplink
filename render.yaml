@@ -32,7 +32,7 @@ services:
     plan: starter
     region: oregon
     schedule: "0 13 * * *"
-    buildCommand: pnpm install && pnpm build
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
     startCommand: node dist/cron-trigger.js
     autoDeployTrigger: commit
     buildFilter:
