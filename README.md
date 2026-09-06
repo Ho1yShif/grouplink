@@ -36,6 +36,10 @@ The health check counts a link as dead when it answers 404, 5xx, or nothing at a
 A 401, 403, 405, 429, or 999 means the site is up and refusing a request with no
 browser fingerprint, which is what X and LinkedIn do.
 
+If the run itself fails, it posts the error to Slack and rethrows. The cron job
+exits as soon as it has dispatched the run, so its exit code says nothing about
+the outcome.
+
 `DRY_RUN=true` is the default. A dry run reads, scrapes, caches, and health-checks,
 then returns the model without committing or deploying.
 

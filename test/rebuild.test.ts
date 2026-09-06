@@ -462,6 +462,18 @@ describe("grouplink.rebuild", () => {
     expect(result.deadLinks).toEqual([]);
   });
 
+  it("posts the failure to Slack before it rethrows", async () => {
+    const h = harness();
+    await expect(
+      withEnv({ DRY_RUN: "false", SITE_DEFAULT_SLUG: "nobody" }, () =>
+        rebuild.func(h.ctx, {}),
+      ),
+    ).rejects.toThrow(/matches no Slug/);
+
+    expect(h.slackPost).toHaveBeenCalledTimes(1);
+    expect(JSON.stringify(h.slackPost.mock.calls[0])).toContain("grouplink.rebuild failed");
+  });
+
   it("writes nothing on a dry run", async () => {
     const h = harness();
     const result = await withEnv({ DRY_RUN: "true" }, () => rebuild.func(h.ctx, {}));
