@@ -149,7 +149,7 @@ itself, right after committing.
 - `pnpm test` — Tier 1. Hermetic: the composition test drives the real
   `grouplink.rebuild`, routing every chained run to the owning package's `*Impl`
   with a fake at the vendor port. No network, no secrets.
-- `RUN_LIVE=1 pnpm test:live` — Tier 2. Hits real Notion, real sites, and a real
+- `pnpm test:live` — Tier 2. Hits real Notion, real sites, and a real
   Key Value instance in dry-run.
 
 ## Where the tasks come from
