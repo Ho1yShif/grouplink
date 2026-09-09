@@ -1,4 +1,4 @@
-// Entry point for the Render cron job that starts the daily rebuild.
+// Entry point for the Render cron job that starts the rebuild every three hours.
 //
 // Workflows have no built-in scheduler, so the schedule is an ordinary cron
 // service that dispatches one run and exits. WORKFLOW_SLUG, CRON_TASK, and

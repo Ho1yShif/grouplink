@@ -1,7 +1,7 @@
 # Blueprint for everything except the Workflow: the static site the page is served
 # from, the Key Value instance that caches scraped metadata, and the cron job that
-# starts the daily rebuild. Blueprints don't support Workflows yet, so create the
-# Workflow service in the Dashboard and set its env vars there — including
+# starts the rebuild every three hours. Blueprints don't support Workflows yet, so
+# create the Workflow service in the Dashboard and set its env vars there — including
 # REDIS_URL, copied from this Key Value instance's internal connection string.
 #
 # Order: apply this Blueprint, create the Workflow, then set WORKFLOW_SLUG and
@@ -31,7 +31,9 @@ services:
     runtime: node
     plan: starter
     region: oregon
-    schedule: "0 13 * * *"
+    # Every three hours. A run with nothing to publish commits nothing, and the
+    # metadata cache holds 24h, so the extra runs cost little beyond health checks.
+    schedule: "0 */3 * * *"
     buildCommand: pnpm install --frozen-lockfile && pnpm build
     startCommand: node dist/cron-trigger.js
     autoDeployTrigger: commit

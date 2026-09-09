@@ -142,7 +142,7 @@ Blueprints don't support Workflows yet, so the Workflow service is created in th
 Dashboard and everything else comes from [`render.yaml`](render.yaml).
 
 1. Dashboard → **New > Blueprint**, link this repo. It creates the static site
-   (`grouplink-site`), the Key Value instance (`grouplink-cache`), and the daily
+   (`grouplink-site`), the Key Value instance (`grouplink-cache`), and the
    cron job (`grouplink-rebuild`). Note the static site's ID and URL.
 2. Dashboard → **New > Workflow** on the same repo.
    Build: `pnpm install && pnpm build`. Start: `node dist/main.js`. Turn

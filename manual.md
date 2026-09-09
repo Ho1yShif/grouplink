@@ -129,7 +129,7 @@ resources:
 
 - `grouplink-site`, the static site
 - `grouplink-cache`, the Key Value instance
-- `grouplink-rebuild`, the daily cron job at 13:00 UTC
+- `grouplink-rebuild`, the cron job that rebuilds every three hours
 
 Note two things before moving on: the static site's service ID
 (`RENDER_STATIC_SITE_ID`, the `srv-…` in its dashboard URL) and its public URL
@@ -237,7 +237,7 @@ against a real service.
 ## Adding a person later
 
 No code and no deploy. Add a People row with a name, a slug, and a tagline, relate
-any links specific to them, and wait for the 13:00 UTC cron or trigger the task by
-hand. Every link with `Everyone` checked is on their page already. The new page is
-committed on that run, because `github.listTree` reports it missing from the branch
-and it counts as changed.
+any links specific to them, and wait for the next three-hourly cron run or trigger
+the task by hand. Every link with `Everyone` checked is on their page already. The
+new page is committed on that run, because `github.listTree` reports it missing from
+the branch and it counts as changed.
