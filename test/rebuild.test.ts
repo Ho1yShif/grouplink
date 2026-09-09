@@ -47,6 +47,7 @@ function rawPage(
   visible: boolean,
   kind: string,
   people: string[] = [SHIFRA],
+  everyone = false,
 ) {
   return {
     id: `p-${order}`,
@@ -59,6 +60,7 @@ function rawPage(
       Order: { type: "number", number: order },
       Visible: { type: "checkbox", checkbox: visible },
       Kind: { type: "select", select: { name: kind } },
+      Everyone: { type: "checkbox", checkbox: everyone },
       People: { type: "relation", relation: people.map((id) => ({ id })) },
     },
   };
@@ -283,6 +285,35 @@ describe("grouplink.rebuild", () => {
     // The shared link is on both.
     expect(files["site/shifra/index.html"]).toContain("Discord");
     expect(files["site/alex/index.html"]).toContain("Discord");
+  });
+
+  it("puts an Everyone link on every page, related to nobody", async () => {
+    const h = harness({
+      links: [
+        ...LINK_PAGES,
+        rawPage("Careers", "https://render.com/careers", 5, true, "Link", [], true),
+      ],
+    });
+    await withEnv({ DRY_RUN: "false" }, () => rebuild.func(h.ctx, {}));
+    const files = h.committed();
+
+    expect(files["site/shifra/index.html"]).toContain("Careers");
+    expect(files["site/alex/index.html"]).toContain("Careers");
+  });
+
+  it("scrapes an Everyone link once, not once per page", async () => {
+    const h = harness({
+      links: [
+        ...LINK_PAGES,
+        rawPage("Careers", "https://render.com/careers", 5, true, "Link", [], true),
+      ],
+    });
+    await withEnv({ DRY_RUN: "false" }, () => rebuild.func(h.ctx, {}));
+
+    const careers = h.scrapeFetch.mock.calls.filter(
+      ([url]) => url === "https://render.com/careers",
+    );
+    expect(careers).toHaveLength(1);
   });
 
   it("gives each page its own name and tagline from the People database", async () => {

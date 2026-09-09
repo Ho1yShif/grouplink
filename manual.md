@@ -24,7 +24,7 @@ Until it publishes, grouplink runs on a local patch that fakes it.
    rm patches/@render-lab__tasks-notion@0.5.0.patch
    ```
    Then delete the `patchedDependencies` block from `pnpm-workspace.yaml` and run
-   `pnpm install && pnpm test`. All 34 tests should still pass. If they do, the
+   `pnpm install && pnpm test`. All 52 tests should still pass. If they do, the
    published package behaves the same as the patch.
 
 Do not skip the cleanup. A patch pinned to 0.5.0 stops applying the moment the
@@ -63,19 +63,23 @@ path can be built without both.
 | `URL` | URL | Where the card points. |
 | `Order` | Number | Ascending. A row without one sorts last. |
 | `Visible` | Checkbox | Unchecked rows are dropped. Check it on every row you want live. |
-| `Kind` | Select | Options `Link` and `Social`, exactly those spellings. |
+| `Kind` | Select | Options `Link` and `Social`. Only `Social` is matched; anything else renders a card. |
+| `Everyone` | Checkbox | Checked puts the link on every person's page. |
 | `People` | Relation | Related to the People database. |
 
 `Link` renders a card. `Social` renders as text in the mono row at the bottom,
 because Render's brand rules want thin single-stroke icons and the YouTube,
 LinkedIn, and X marks are filled logos.
 
-`People` is what puts a link on a page. Relate a row to two people and it appears
-on both pages, fetched once. Relate it to nobody and it renders nowhere. There is
-no "all links" page.
+`Everyone` and `People` together decide where a link appears, and the two are a
+union. Check `Everyone` for the links every page carries, like the Render website.
+Use `People` for the rest: relate a row to two people and it appears on both pages,
+fetched once. A row with `Everyone` unchecked and no relation renders nowhere.
+There is no "all links" page.
 
-Seed it with the four links and three socials from `scripts/placeholder.ts`, all
-related to your People row.
+Seed it with the four links and three socials from `scripts/placeholder.ts`. Check
+`Everyone` on the ones that belong on every page and relate the rest to your People
+row.
 
 ### Share both with an integration
 
@@ -233,6 +237,7 @@ against a real service.
 ## Adding a person later
 
 No code and no deploy. Add a People row with a name, a slug, and a tagline, relate
-some links to it, and wait for the 13:00 UTC cron or trigger the task by hand. The
-new page is committed on the next run, because `github.listTree` reports it missing
-from the branch and it counts as changed.
+any links specific to them, and wait for the 13:00 UTC cron or trigger the task by
+hand. Every link with `Everyone` checked is on their page already. The new page is
+committed on that run, because `github.listTree` reports it missing from the branch
+and it counts as changed.

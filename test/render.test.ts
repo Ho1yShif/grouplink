@@ -1,7 +1,13 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { escapeHtml, renderPage, safeUrl, type PageModel } from "../src/render.js";
-import { applyUtm, faviconUrl, toLinkRows, visibleInOrder } from "../src/links.js";
+import {
+  applyUtm,
+  faviconUrl,
+  groupByPerson,
+  toLinkRows,
+  visibleInOrder,
+} from "../src/links.js";
 import type { PageDTO } from "@render-lab/tasks-notion";
 
 const model: PageModel = {
@@ -173,5 +179,44 @@ describe("toLinkRows / visibleInOrder", () => {
   it("reads Kind as a social flag", () => {
     const social = visibleInOrder(toLinkRows(pages)).find((r) => r.title === "X");
     expect(social?.kind).toBe("social");
+  });
+});
+
+describe("groupByPerson", () => {
+  const people = [
+    { id: "person-shifra", name: "Shifra", slug: "shifra", tagline: "" },
+    { id: "person-alex", name: "Alex", slug: "alex", tagline: "" },
+  ];
+
+  const rows = toLinkRows([
+    page({ URL: "https://shared.example", People: ["person-shifra"] }, "Shifra only"),
+    page({ URL: "https://all.example", Everyone: true }, "Everyone"),
+    page(
+      { URL: "https://both.example", Everyone: true, People: ["person-shifra"] },
+      "Everyone and related",
+    ),
+    page({ URL: "https://orphan.example" }, "Related to nobody"),
+  ]);
+
+  const titlesFor = (slug: string) =>
+    groupByPerson(rows, people)
+      .find((p) => p.person.slug === slug)
+      ?.rows.map((r) => r.title);
+
+  it("puts an Everyone row on every page", () => {
+    expect(titlesFor("alex")).toEqual(["Everyone", "Everyone and related"]);
+  });
+
+  it("counts a row that is both Everyone and related once", () => {
+    expect(titlesFor("shifra")).toEqual([
+      "Shifra only",
+      "Everyone",
+      "Everyone and related",
+    ]);
+  });
+
+  it("renders a row related to nobody nowhere", () => {
+    expect(titlesFor("shifra")).not.toContain("Related to nobody");
+    expect(titlesFor("alex")).not.toContain("Related to nobody");
   });
 });

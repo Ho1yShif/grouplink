@@ -73,6 +73,7 @@ There are two. Links:
 | `Order` | number | Sort order. Rows without one sort last. |
 | `Visible` | checkbox | Unchecked rows are dropped. |
 | `Kind` | select | `Link` renders a card, `Social` renders in the mono row. |
+| `Everyone` | checkbox | Checked puts the link on every person's page. |
 | `People` | relation | Which pages the link appears on. Relate it to two rows and it appears on both. |
 
 People:
@@ -83,9 +84,12 @@ People:
 | `Slug` | text | The URL path. `shifra` serves at `/shifra`. |
 | `Tagline` | text | The line under the name. |
 
+A link's audience is `Everyone` plus whatever `People` names. A row with both set
+is redundant, not contradictory, and a row with neither renders nowhere.
+
 A person's page is written to `site/<slug>/index.html`. The person named by
 `SITE_DEFAULT_SLUG` is written to `site/index.html` as well, so `/` and their own
-path serve the same page. A link related to nobody is rendered nowhere.
+path serve the same page.
 
 Share both databases with the Notion integration that owns `NOTION_TOKEN`.
 

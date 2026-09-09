@@ -9,6 +9,8 @@ export interface LinkRow {
   order: number;
   visible: boolean;
   kind: LinkKind;
+  /** Renders on every person's page, whatever `personIds` holds. */
+  everyone: boolean;
   /** Notion page ids of the People rows this link belongs to. */
   personIds: string[];
 }
@@ -52,10 +54,11 @@ export function toLinkRows(pages: PageDTO[]): LinkRow[] {
     const order = typeof props["Order"] === "number" ? props["Order"] : Number.MAX_SAFE_INTEGER;
     const visible = props["Visible"] !== false;
     const kind = readString(props["Kind"]).toLowerCase() === "social" ? "social" : "link";
+    const everyone = props["Everyone"] === true;
     const related = props["People"];
     const personIds = Array.isArray(related) ? related : [];
 
-    rows.push({ title, url, order, visible, kind, personIds });
+    rows.push({ title, url, order, visible, kind, everyone, personIds });
   }
 
   return rows;
@@ -80,11 +83,15 @@ export function toPersonRows(pages: PageDTO[]): PersonRow[] {
   return rows;
 }
 
-/** One bundle per person. A link related to two people appears in both. */
+/**
+ * One bundle per person. A link related to two people appears in both, and one with
+ * `Everyone` checked appears on every page. The two are a union, so a row with both
+ * set is redundant rather than contradictory.
+ */
 export function groupByPerson(rows: LinkRow[], people: PersonRow[]): PersonPage[] {
   return people.map((person) => ({
     person,
-    rows: rows.filter((row) => row.personIds.includes(person.id)),
+    rows: rows.filter((row) => row.everyone || row.personIds.includes(person.id)),
   }));
 }
 
