@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src https:; style-src 'sha256-LYxyfnXAco5UU4TmbNfU6fW4CzvML8tbMCqQJ61VN7w='; script-src 'sha256-nsmyq4665IeAl+Jlo+x36bCB9QoTOCItVFJQEtSIlhM='; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https:; style-src 'sha256-kdnhXhxX5ktzBmDU0eoeJZcyEB6/oj8L1uu4iheb6YQ='; script-src 'sha256-nsmyq4665IeAl+Jlo+x36bCB9QoTOCItVFJQEtSIlhM='; font-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Render — links</title>
-<meta name="description" content="Cloud application hosting for developers.">
+<meta name="description" content="The fastest path to production for full-stack applications and agents">
 <meta property="og:title" content="Render — links">
-<meta property="og:description" content="Cloud application hosting for developers.">
+<meta property="og:description" content="The fastest path to production for full-stack applications and agents">
 <meta property="og:type" content="website">
 <link rel="icon" href="/assets/render-logo-black.svg" media="(prefers-color-scheme: light)">
 <link rel="icon" href="/assets/render-logo-white.svg" media="(prefers-color-scheme: dark)">
@@ -38,7 +38,6 @@
   --text: #0d0d0d;
   --text-secondary: #4d4d4d;
   --text-faint: #6b6b6b;
-  --text-overline: #6b6b6b;
   --link: #8a05ff;
   --link-hover: #48008c;
   --link-bg: #e7dbff;
@@ -62,7 +61,6 @@
     --text: #ffffff;
     --text-secondary: #c7c7c7;
     --text-faint: #b3b3b3;
-    --text-overline: #b3b3b3;
     --link: #d1b8ff;
     --link-hover: #e7dbff;
     --link-bg: #48008c;
@@ -99,8 +97,11 @@ body {
 .masthead {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
   gap: 16px;
+  /* Adds to the .page gap so the masthead sits further from the links. */
+  margin-bottom: 24px;
 }
 
 .mark { width: 48px; height: 48px; display: block; }
@@ -125,17 +126,6 @@ body {
   line-height: 26px;
   color: var(--text-secondary);
   max-width: 40ch;
-}
-
-.overline {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--text-overline);
-  margin: 0 0 16px;
 }
 
 .links { display: flex; flex-direction: column; gap: 12px; }
@@ -214,18 +204,9 @@ body {
 .social:hover::after { transform: scaleX(1); }
 .social:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
-.stamp {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 11px;
-  line-height: 14px;
-  letter-spacing: 0.025em;
-  text-transform: uppercase;
-  color: var(--text-overline);
-}
-
 @media (max-width: 767px) {
   .page { padding: 48px 16px 40px; gap: 32px; }
+  .masthead { margin-bottom: 12px; }
   .name { font-size: 32px; line-height: 36px; letter-spacing: -0.012em; }
   .card { min-height: 44px; }
 }
@@ -243,11 +224,10 @@ body {
       <img class="mark mark--light" src="/assets/render-logo-black.svg" alt="" width="48" height="48" aria-hidden="true">
       <img class="mark mark--dark" src="/assets/render-logo-white.svg" alt="" width="48" height="48" aria-hidden="true">
       <h1 class="name">Render</h1>
-      <p class="tagline">Cloud application hosting for developers.</p>
+      <p class="tagline">The fastest path to production for full-stack applications and agents</p>
     </header>
 
     <section>
-      <h2 class="overline">Links</h2>
       <div class="links">
       <a class="card" href="https://discord.com/invite/gWBFXry3rY">
         <img class="card__icon" src="https://discord.com/favicon.ico" alt="" loading="lazy">
@@ -290,7 +270,6 @@ body {
       <a class="social" href="https://x.com/render">X</a>
     </nav>
 
-    <p class="stamp">Updated 2026-09-06</p>
   </main>
 <script>
 addEventListener('error', function (event) {

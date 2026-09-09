@@ -13,8 +13,6 @@ import type { PageDTO } from "@render-lab/tasks-notion";
 const model: PageModel = {
   name: "Render",
   tagline: "Cloud application hosting for developers.",
-  overline: "Links",
-  generatedAt: "2026-09-04T12:00:00.000Z",
   cards: [
     { title: "First", url: "https://example.com/a", description: "A", iconUrl: "https://example.com/favicon.ico" },
     { title: "Second", url: "https://example.com/b", description: "", iconUrl: "" },
@@ -57,10 +55,6 @@ describe("renderPage", () => {
     expect(renderPage({ ...model, socials: [] })).not.toContain('class="socials"');
   });
 
-  it("stamps the run date", () => {
-    expect(renderPage(model)).toContain("Updated 2026-09-04");
-  });
-
   it("declares both color schemes and no bold weight", () => {
     const html = renderPage(model);
     expect(html).toContain("@media (prefers-color-scheme: dark)");
@@ -101,6 +95,10 @@ describe("content security policy", () => {
     const csp = policy(html);
     expect(csp).toContain(`style-src '${sha256(inlineBlock(html, "style"))}'`);
     expect(csp).toContain(`script-src '${sha256(inlineBlock(html, "script"))}'`);
+  });
+
+  it("allows the site's own images, so the logo renders over http too", () => {
+    expect(policy(renderPage(model))).toContain("img-src 'self' https:");
   });
 
   it("emits no inline event handlers, which no hash can allow", () => {

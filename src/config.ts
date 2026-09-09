@@ -20,8 +20,6 @@ export interface RebuildConfig {
 
   /** Slug of the person the root page renders. Their page is written twice. */
   defaultSlug: string;
-  /** The small line above the name. The only copy not read from Notion. */
-  overline: string;
 
   /** Seconds a scraped metadata record stays in Key Value. */
   cacheTtlSeconds: number;
@@ -82,7 +80,6 @@ export function loadConfig(
     dryRun: input.dryRun ?? envFlag(env.DRY_RUN, true),
 
     defaultSlug,
-    overline: env.SITE_OVERLINE ?? "Links",
 
     cacheTtlSeconds: envInt(env.METADATA_TTL_SECONDS, 86_400),
 

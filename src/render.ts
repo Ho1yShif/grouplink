@@ -3,7 +3,7 @@
 //
 // Visual foundations come from Render's brand system: semantic color tokens in
 // :root with a dark override, Roobert Light for the name, PP Neue Montreal for
-// prose, PP Neue Montreal Mono for the overline and socials, square corners,
+// prose, PP Neue Montreal Mono for the socials, square corners,
 // 1px hairlines, purple reserved for links and focus.
 //
 // The page carries its own Content-Security-Policy, with the inline style and
@@ -32,11 +32,8 @@ export interface SocialLink {
 export interface PageModel {
   name: string;
   tagline: string;
-  overline: string;
   cards: LinkCard[];
   socials: SocialLink[];
-  /** ISO timestamp of the run that produced the page. */
-  generatedAt: string;
 }
 
 export function escapeHtml(value: string): string {
@@ -89,7 +86,6 @@ const STYLES = `
   --text: #0d0d0d;
   --text-secondary: #4d4d4d;
   --text-faint: #6b6b6b;
-  --text-overline: #6b6b6b;
   --link: #8a05ff;
   --link-hover: #48008c;
   --link-bg: #e7dbff;
@@ -113,7 +109,6 @@ const STYLES = `
     --text: #ffffff;
     --text-secondary: #c7c7c7;
     --text-faint: #b3b3b3;
-    --text-overline: #b3b3b3;
     --link: #d1b8ff;
     --link-hover: #e7dbff;
     --link-bg: #48008c;
@@ -150,8 +145,11 @@ body {
 .masthead {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
   gap: 16px;
+  /* Adds to the .page gap so the masthead sits further from the links. */
+  margin-bottom: 24px;
 }
 
 .mark { width: 48px; height: 48px; display: block; }
@@ -176,17 +174,6 @@ body {
   line-height: 26px;
   color: var(--text-secondary);
   max-width: 40ch;
-}
-
-.overline {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 12px;
-  line-height: 16px;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--text-overline);
-  margin: 0 0 16px;
 }
 
 .links { display: flex; flex-direction: column; gap: 12px; }
@@ -265,18 +252,9 @@ body {
 .social:hover::after { transform: scaleX(1); }
 .social:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
 
-.stamp {
-  font-family: var(--font-mono);
-  font-weight: 500;
-  font-size: 11px;
-  line-height: 14px;
-  letter-spacing: 0.025em;
-  text-transform: uppercase;
-  color: var(--text-overline);
-}
-
 @media (max-width: 767px) {
   .page { padding: 48px 16px 40px; gap: 32px; }
+  .masthead { margin-bottom: 12px; }
   .name { font-size: 32px; line-height: 36px; letter-spacing: -0.012em; }
   .card { min-height: 44px; }
 }
@@ -309,8 +287,10 @@ function sha256Source(content: string): string {
 
 const CSP = [
   "default-src 'none'",
-  // Favicons are fetched from whatever origin the link points at, over TLS only.
-  "img-src https:",
+  // 'self' covers the logo and any other asset the site ships, so the mark still
+  // renders over plain http on localhost. Favicons come from whatever origin the
+  // link points at, over TLS only.
+  "img-src 'self' https:",
   `style-src ${sha256Source(STYLES)}`,
   `script-src ${sha256Source(ICON_FALLBACK_SCRIPT)}`,
   "font-src 'self'",
@@ -375,7 +355,6 @@ ${socials}
     </header>
 
     <section>
-      <h2 class="overline">${escapeHtml(model.overline)}</h2>
       <div class="links">
 ${cards}
       </div>
@@ -383,7 +362,6 @@ ${cards}
 
 ${socialsBlock}
 
-    <p class="stamp">Updated ${escapeHtml(model.generatedAt.slice(0, 10))}</p>
   </main>
 <script>${ICON_FALLBACK_SCRIPT}</script>
 </body>

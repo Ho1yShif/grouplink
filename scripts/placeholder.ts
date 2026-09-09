@@ -15,9 +15,7 @@ const SEED: Array<{ title: string; url: string }> = [
 
 const html = renderPage({
   name: "Render",
-  tagline: "Cloud application hosting for developers.",
-  overline: "Links",
-  generatedAt: new Date().toISOString(),
+  tagline: "The fastest path to production for full-stack applications and agents",
   cards: SEED.map(
     (link): LinkCard => ({
       title: link.title,

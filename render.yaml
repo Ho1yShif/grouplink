@@ -6,55 +6,59 @@
 #
 # Order: apply this Blueprint, create the Workflow, then set WORKFLOW_SLUG and
 # RENDER_STATIC_SITE_ID.
-services:
-  # The page. autoDeploy is off because grouplink.rebuild triggers the deploy
-  # itself, right after it commits the new index.html.
-  - type: web
-    name: grouplink-site
-    runtime: static
-    buildCommand: ""
-    staticPublishPath: ./site
-    autoDeployTrigger: "off"
-    headers:
-      - path: /*
-        name: X-Content-Type-Options
-        value: nosniff
-      - path: /*
-        name: Referrer-Policy
-        value: strict-origin-when-cross-origin
-      - path: /assets/fonts/*
-        name: Cache-Control
-        value: public, max-age=31536000, immutable
+projects:
+  - name: grouplink
+    environments:
+      - name: production
+        services:
+          # The page. autoDeploy is off because grouplink.rebuild triggers the deploy
+          # itself, right after it commits the new index.html.
+          - type: web
+            name: grouplink-site
+            runtime: static
+            buildCommand: ""
+            staticPublishPath: ./site
+            autoDeployTrigger: "off"
+            headers:
+              - path: /*
+                name: X-Content-Type-Options
+                value: nosniff
+              - path: /*
+                name: Referrer-Policy
+                value: strict-origin-when-cross-origin
+              - path: /assets/fonts/*
+                name: Cache-Control
+                value: public, max-age=31536000, immutable
 
-  - type: cron
-    name: grouplink-rebuild
-    runtime: node
-    plan: starter
-    region: oregon
-    # Every three hours. A run with nothing to publish commits nothing, and the
-    # metadata cache holds 24h, so the extra runs cost little beyond health checks.
-    schedule: "0 */3 * * *"
-    buildCommand: pnpm install --frozen-lockfile && pnpm build
-    startCommand: node dist/cron-trigger.js
-    autoDeployTrigger: commit
-    buildFilter:
-      paths:
-        - src/**
-        - package.json
-        - pnpm-lock.yaml
-        - render.yaml
-    envVars:
-      - key: RENDER_API_KEY
-        sync: false
-      - key: WORKFLOW_SLUG
-        sync: false
-      - key: CRON_TASK
-        value: grouplink.rebuild
+          - type: cron
+            name: grouplink-rebuild
+            runtime: node
+            plan: starter
+            region: oregon
+            # Every three hours. A run with nothing to publish commits nothing, and the
+            # metadata cache holds 24h, so the extra runs cost little beyond health checks.
+            schedule: "0 */3 * * *"
+            buildCommand: pnpm install --frozen-lockfile && pnpm build
+            startCommand: node dist/cron-trigger.js
+            autoDeployTrigger: commit
+            buildFilter:
+              paths:
+                - src/**
+                - package.json
+                - pnpm-lock.yaml
+                - render.yaml
+            envVars:
+              - key: RENDER_API_KEY
+                sync: false
+              - key: WORKFLOW_SLUG
+                sync: false
+              - key: CRON_TASK
+                value: grouplink.rebuild
 
-  - type: keyvalue
-    name: grouplink-cache
-    plan: starter
-    region: oregon
-    maxmemoryPolicy: allkeys-lru
-    # Private network only. The Workflow reaches it over the internal URL.
-    ipAllowList: []
+          - type: keyvalue
+            name: grouplink-cache
+            plan: starter
+            region: oregon
+            maxmemoryPolicy: allkeys-lru
+            # Private network only. The Workflow reaches it over the internal URL.
+            ipAllowList: []

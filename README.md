@@ -59,8 +59,28 @@ render workflows tasks list --local
 render workflows start grouplink.rebuild --local --input='[{"dryRun":true}]'
 ```
 
+### See the page on localhost
+
+`pnpm preview` reads both Notion databases, scrapes each card's description, and
+writes one `site/<slug>/index.html` per person plus the root copy. It needs
+`NOTION_TOKEN`, both database IDs, and `SITE_DEFAULT_SLUG` in `.env`. It never
+commits, deploys, or touches Key Value, so no `REDIS_URL` is needed.
+
+```bash
+pnpm preview
+pnpm serve                # http://localhost:3000
+```
+
+`pnpm serve` reloads the browser when a file under `site/` changes. Saving a
+file under `src/` re-runs `pnpm placeholder` first, so an edit to the page shows
+up right away — that rewrites `site/index.html` from the seed links and drops
+the preview's real content. Run `pnpm preview` again to get it back.
+
+The pages under `site/` are tracked, so `git checkout -- site && git clean -fd site`
+undoes a preview.
+
 `pnpm placeholder` regenerates `site/index.html` from the seed links without
-touching Notion, which is useful for looking at the page in a browser.
+touching Notion, for looking at the design before the databases exist.
 
 ## The Notion databases
 
@@ -112,7 +132,6 @@ Reading a relation needs `@render-lab/tasks-notion` 0.6.0 or later.
 | `SLACK_WEBHOOK_URL` | — | Optional. Unset logs the digest to the console. |
 | `DRY_RUN` | `true` | Set `false` to commit and deploy. |
 | `SITE_DEFAULT_SLUG` | — | Slug of the person the root page shows. |
-| `SITE_OVERLINE` | `Links` | The small line above the name, on every page. |
 | `SITE_DIR` | `site` | Directory the pages are committed under. |
 | `METADATA_TTL_SECONDS` | `86400` | How long a scraped description is cached. |
 | `LINKS_LIMIT` | `100` | Notion rows to read per run. |
@@ -126,7 +145,7 @@ Per-run overrides go in the input: `--input='[{"dryRun":false}]'`.
 `src/render.ts` is one function returning the whole document — no framework, no
 build step, inline CSS. It follows Render's brand foundations: semantic color
 tokens with a dark override, Roobert Light for the name, PP Neue Montreal for
-prose, mono for the overline and socials, square corners, 1px hairlines, and
+prose, mono for the socials, square corners, 1px hairlines, and
 purple reserved for links and focus rings.
 
 The brand woff2 files under `site/assets/fonts/` are commercial faces. If this

@@ -151,10 +151,9 @@ async function runRebuild(ctx: TaskContext, input: RebuildInput): Promise<Rebuil
 
   // 6) Render one file per person, plus a second copy of the default person's page
   //    at the site root, so `/` and `/<default slug>` serve the same thing.
-  const generatedAt = new Date().toISOString();
   const files: SiteFile[] = [];
   for (const page of pages) {
-    const content = renderPage(toModel(page, metaByUrl, cfg, generatedAt));
+    const content = renderPage(toModel(page, metaByUrl, cfg));
     files.push({ path: pagePath(cfg.siteDir, page.person.slug), content });
     if (page.person.slug === cfg.defaultSlug) {
       files.push({ path: pagePath(cfg.siteDir, ""), content });
@@ -194,7 +193,7 @@ async function runRebuild(ctx: TaskContext, input: RebuildInput): Promise<Rebuil
 
   const changed = files.filter((file) => {
     const current = currentByPath.get(file.path);
-    return current === undefined || !sameIgnoringStamp(current, file.content);
+    return current === undefined || current !== file.content;
   });
   result.changedPaths = changed.map((file) => file.path);
 
@@ -282,7 +281,6 @@ function toModel(
   page: PersonPage,
   metaByUrl: Map<string, CachedMeta>,
   cfg: RebuildConfig,
-  generatedAt: string,
 ): PageModel {
   const socials: SocialLink[] = page.rows
     .filter((row) => row.kind === "social")
@@ -291,8 +289,6 @@ function toModel(
   return {
     name: page.person.name,
     tagline: page.person.tagline,
-    overline: cfg.overline,
-    generatedAt,
     socials,
     cards: page.rows
       .filter((row) => row.kind === "link")
@@ -307,16 +303,6 @@ function toCard(row: LinkRow, meta: CachedMeta | undefined): LinkCard {
     description: meta?.description ?? "",
     iconUrl: faviconUrl(row.url),
   };
-}
-
-/**
- * The page carries the run date, so a byte comparison would commit every day.
- * Compare with the stamp line removed.
- */
-function sameIgnoringStamp(a: string, b: string): boolean {
-  const strip = (html: string): string =>
-    html.replace(/<p class="stamp">[\s\S]*?<\/p>/, "");
-  return strip(a) === strip(b);
 }
 
 async function notify(ctx: TaskContext, text: string, deadLinks: string[]): Promise<void> {

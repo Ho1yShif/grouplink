@@ -422,12 +422,11 @@ describe("grouplink.rebuild", () => {
     const first = harness();
     await withEnv({ DRY_RUN: "false" }, () => rebuild.func(first.ctx, {}));
     const rendered = first.committed();
-    const stale = (html: string) => html.replace(/Updated \d{4}-\d{2}-\d{2}/, "Updated 2020-01-01");
 
     // Alex's page is already on the branch and unchanged; Shifra's is stale.
     const second = harness({
       current: {
-        "site/alex/index.html": stale(rendered["site/alex/index.html"] ?? ""),
+        "site/alex/index.html": rendered["site/alex/index.html"] ?? "",
         "site/shifra/index.html": "<html>old</html>",
         "site/index.html": "<html>old</html>",
       },
@@ -438,17 +437,11 @@ describe("grouplink.rebuild", () => {
     expect(Object.keys(second.committed())).not.toContain("site/alex/index.html");
   });
 
-  it("skips the commit when only the date stamp would change", async () => {
+  it("skips the commit when nothing changed", async () => {
     const first = harness();
     await withEnv({ DRY_RUN: "false" }, () => rebuild.func(first.ctx, {}));
-    const rendered = first.committed();
-    const stale = (html: string) => html.replace(/Updated \d{4}-\d{2}-\d{2}/, "Updated 2020-01-01");
 
-    const second = harness({
-      current: Object.fromEntries(
-        Object.entries(rendered).map(([path, html]) => [path, stale(html)]),
-      ),
-    });
+    const second = harness({ current: first.committed() });
     const result = await withEnv({ DRY_RUN: "false" }, () => rebuild.func(second.ctx, {}));
 
     expect(result.committed).toBe(false);
@@ -461,13 +454,12 @@ describe("grouplink.rebuild", () => {
     const first = harness();
     await withEnv({ DRY_RUN: "false" }, () => rebuild.func(first.ctx, {}));
     const rendered = first.committed();
-    const stale = (html: string) => html.replace(/Updated \d{4}-\d{2}-\d{2}/, "Updated 2020-01-01");
 
     // Everything is current except alex, whose file has never been committed.
     const second = harness({
       current: {
-        "site/shifra/index.html": stale(rendered["site/shifra/index.html"] ?? ""),
-        "site/index.html": stale(rendered["site/index.html"] ?? ""),
+        "site/shifra/index.html": rendered["site/shifra/index.html"] ?? "",
+        "site/index.html": rendered["site/index.html"] ?? "",
       },
     });
     const result = await withEnv({ DRY_RUN: "false" }, () => rebuild.func(second.ctx, {}));
