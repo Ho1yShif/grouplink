@@ -357,7 +357,9 @@ describe("grouplink.rebuild", () => {
     await withEnv({ DRY_RUN: "false" }, () => rebuild.func(h.ctx, {}));
 
     const html = h.committed()["site/alex/index.html"] ?? "";
-    expect(html).toContain('src="/assets/render-logo-black.svg"');
+    expect(html).toContain('href="/assets/render-logomark-black.svg"');
+    expect(html).toContain("url('/assets/render-logo-white.png')");
+    expect(html).toContain("url('/assets/icons/github.svg')");
     expect(html).toContain("url('/assets/fonts/RoobertVF.woff2')");
     expect(html).not.toMatch(/["'(]assets\//);
   });
@@ -368,13 +370,13 @@ describe("grouplink.rebuild", () => {
     expect(h.committedHtml()).toContain("desc for https://discord.com/invite/x");
   });
 
-  it("applies the corrected UTM to render.com links only", async () => {
+  it("links to the Notion URL untouched, with no tracking parameters", async () => {
     const h = harness();
     await withEnv({ DRY_RUN: "false" }, () => rebuild.func(h.ctx, {}));
     const html = h.committedHtml();
-    expect(html).toContain("https://render.com/startups?utm_source=linktree&amp;utm_medium=linktree");
+    expect(html).toContain('href="https://render.com/startups"');
     expect(html).toContain('href="https://discord.com/invite/x"');
-    expect(html).not.toContain("utm_source=linktree&amp;?utm_medium");
+    expect(html).not.toContain("utm_");
   });
 
   it("skips the scrape for a URL already in Key Value", async () => {

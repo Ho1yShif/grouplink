@@ -4,9 +4,11 @@ Render's links page. The page is plain HTML on a Render static site. A Render
 Workflow reads the link list from Notion, enriches it, commits `site/index.html`,
 and deploys.
 
-It replaces a Linktree page that couldn't be styled to brand, was two-thirds
-Linktree's own affiliate marketplace, and shipped a malformed
-`?utm_source=linktree&?utm_medium=referral` on every Render URL.
+It replaces a Linktree page that couldn't be styled to brand and was two-thirds
+Linktree's own affiliate marketplace.
+
+Links are rendered exactly as the Notion row gives them. Put any tracking
+parameters in the Notion URL itself.
 
 ## Pipeline
 
@@ -144,9 +146,15 @@ Per-run overrides go in the input: `--input='[{"dryRun":false}]'`.
 
 `src/render.ts` is one function returning the whole document — no framework, no
 build step, inline CSS. It follows Render's brand foundations: semantic color
-tokens with a dark override, Roobert Light for the name, PP Neue Montreal for
-prose, mono for the socials, square corners, 1px hairlines, and
-purple reserved for links and focus rings.
+tokens with a dark override, PP Neue Montreal for prose, square corners, 1px
+hairlines, and purple reserved for links and focus rings.
+
+The masthead is centered: the Render wordmark, the tagline, then a row of social
+icons. A social row whose label is `YouTube`, `LinkedIn`, `X`, `GitHub`, or
+`Discord` gets
+the matching icon from `site/assets/icons/`; any other label renders as a mono
+wordmark. The wordmark and the icons are white files drawn as CSS masks and
+painted with the text color, so they read on both the light and dark background.
 
 The brand woff2 files under `site/assets/fonts/` are commercial faces. If this
 repo needs to stop redistributing them, delete the four `@font-face` blocks and

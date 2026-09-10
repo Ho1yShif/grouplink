@@ -15,7 +15,6 @@ import { postMessage } from "@render-lab/tasks-slack";
 
 import { assertWritable, loadConfig, type RebuildConfig, type RebuildInput } from "./config.js";
 import {
-  applyUtm,
   cardDescription,
   faviconUrl,
   groupByPerson,
@@ -299,7 +298,7 @@ function toModel(
 function toCard(row: LinkRow, meta: CachedMeta | undefined): LinkCard {
   return {
     title: row.title,
-    url: applyUtm(row.url),
+    url: row.url,
     description: meta?.description ?? "",
     iconUrl: faviconUrl(row.url),
   };

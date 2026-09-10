@@ -2,8 +2,7 @@
 // grouplink.rebuild commits whatever this returns as site/index.html.
 //
 // Visual foundations come from Render's brand system: semantic color tokens in
-// :root with a dark override, Roobert Light for the name, PP Neue Montreal for
-// prose, PP Neue Montreal Mono for the socials, square corners,
+// :root with a dark override, PP Neue Montreal for prose, square corners,
 // 1px hairlines, purple reserved for links and focus.
 //
 // The page carries its own Content-Security-Policy, with the inline style and
@@ -16,7 +15,7 @@ import { createHash } from "node:crypto";
 export interface LinkCard {
   /** Display text. Comes from Notion, not from the scrape. */
   title: string;
-  /** Final href, UTM already applied. */
+  /** Final href, exactly as the Notion row gives it. */
   url: string;
   /** Scraped og:title or meta description; may be empty. */
   description: string;
@@ -31,6 +30,7 @@ export interface SocialLink {
 
 export interface PageModel {
   name: string;
+  /** A newline becomes a line break on the page, and a space in the metadata. */
   tagline: string;
   cards: LinkCard[];
   socials: SocialLink[];
@@ -134,7 +134,7 @@ body {
 }
 
 .page {
-  max-width: 480px;
+  max-width: 560px;
   margin: 0 auto;
   padding: 96px 32px 64px;
   display: flex;
@@ -148,24 +148,31 @@ body {
   align-items: center;
   text-align: center;
   gap: 16px;
-  /* Adds to the .page gap so the masthead sits further from the links. */
-  margin-bottom: 24px;
+  /* Adds to the .page gap, so the links start further below the socials. */
+  margin-bottom: 48px;
 }
 
-.mark { width: 48px; height: 48px; display: block; }
-.mark--dark { display: none; }
-@media (prefers-color-scheme: dark) {
-  .mark--light { display: none; }
-  .mark--dark { display: block; }
-}
+.name { margin: 0; }
 
-.name {
-  font-family: var(--font-brand);
-  font-weight: 300;
-  font-size: 40px;
-  line-height: 44px;
-  letter-spacing: -0.015em;
-  margin: 0;
+.logo-link {
+  display: block;
+  color: var(--text);
+}
+.logo-link:hover { color: var(--link); }
+.logo-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+/*
+ * The logo file is solid white, so an <img> would vanish on the light
+ * background. It is a mask instead, painted with the text color.
+ */
+.logo {
+  display: block;
+  width: 240px;
+  height: 46px;
+  background-color: currentColor;
+  transition: background-color 150ms var(--ease);
+  -webkit-mask: url('/assets/render-logo-white.png') center / contain no-repeat;
+  mask: url('/assets/render-logo-white.png') center / contain no-repeat;
 }
 
 .tagline {
@@ -217,52 +224,63 @@ body {
 
 .socials {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 24px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border);
+  gap: 20px;
+  /* Adds to the .masthead gap, so the icons clear the tagline. */
+  margin-top: 8px;
 }
 
 .social {
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+}
+.social:hover { color: var(--link); }
+.social:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+/*
+ * The icon files are solid white, so an <img> would vanish on the light
+ * background. Each one is a mask instead, painted with the text color.
+ */
+.social__icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+  transition: background-color 150ms var(--ease);
+}
+
+.social__icon--youtube { --icon: url('/assets/icons/youtube.svg'); }
+.social__icon--linkedin { --icon: url('/assets/icons/linkedin.svg'); }
+.social__icon--x { --icon: url('/assets/icons/x.svg'); }
+.social__icon--github { --icon: url('/assets/icons/github.svg'); }
+.social__icon--discord { --icon: url('/assets/icons/discord.svg'); }
+
+/* A label with no icon file keeps the old wordmark treatment. */
+.social--text {
   font-family: var(--font-mono);
   font-weight: 500;
   font-size: 12px;
-  line-height: 16px;
+  line-height: 24px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--link);
-  text-decoration: none;
-  position: relative;
-  padding-bottom: 2px;
 }
-
-.social::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 200ms var(--ease);
-}
-.social:hover { color: var(--link-hover); }
-.social:hover::after { transform: scaleX(1); }
-.social:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.social--text:hover { color: var(--link-hover); }
 
 @media (max-width: 767px) {
   .page { padding: 48px 16px 40px; gap: 32px; }
-  .masthead { margin-bottom: 12px; }
-  .name { font-size: 32px; line-height: 36px; letter-spacing: -0.012em; }
+  .masthead { margin-bottom: 28px; }
+  .logo { width: 190px; height: 36px; }
   .card { min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .card__arrow { transition: none; }
-  .social::after { transition: none; transform: scaleX(0); }
-  .social:hover::after { transform: scaleX(1); }
+  .logo, .social__icon { transition: none; }
 }
 `;
 
@@ -317,17 +335,31 @@ function renderCard(card: LinkCard): string {
       </a>`;
 }
 
+/** Where the wordmark in the masthead links. */
+const LOGO_HREF = "https://dashboard.render.com/";
+
+/** Labels with an icon under site/assets/icons, keyed by lowercased label. */
+const SOCIAL_ICONS = new Set(["youtube", "linkedin", "x", "github", "discord"]);
+
 function renderSocial(social: SocialLink): string {
-  return `      <a class="social" href="${escapeHtml(safeUrl(social.url))}">${escapeHtml(social.label)}</a>`;
+  const href = escapeHtml(safeUrl(social.url));
+  const label = escapeHtml(social.label);
+  const icon = social.label.trim().toLowerCase();
+  if (!SOCIAL_ICONS.has(icon)) {
+    return `        <a class="social social--text" href="${href}">${label}</a>`;
+  }
+  return `        <a class="social" href="${href}" aria-label="${label}"><span class="social__icon social__icon--${icon}"></span></a>`;
 }
 
 export function renderPage(model: PageModel): string {
+  const taglineText = model.tagline.replace(/\s*\r?\n\s*/g, " ").trim();
+  const taglineHtml = escapeHtml(model.tagline.trim()).replace(/\r?\n/g, "<br>");
   const cards = model.cards.map(renderCard).join("\n");
   const socials = model.socials.map(renderSocial).join("\n");
   const socialsBlock = socials
-    ? `    <nav class="socials" aria-label="Social">
+    ? `      <nav class="socials" aria-label="Social">
 ${socials}
-    </nav>`
+      </nav>`
     : "";
 
   return `<!doctype html>
@@ -337,21 +369,20 @@ ${socials}
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="${CSP}">
 <title>${escapeHtml(model.name)} — links</title>
-<meta name="description" content="${escapeHtml(model.tagline)}">
+<meta name="description" content="${escapeHtml(taglineText)}">
 <meta property="og:title" content="${escapeHtml(model.name)} — links">
-<meta property="og:description" content="${escapeHtml(model.tagline)}">
+<meta property="og:description" content="${escapeHtml(taglineText)}">
 <meta property="og:type" content="website">
-<link rel="icon" href="/assets/render-logo-black.svg" media="(prefers-color-scheme: light)">
-<link rel="icon" href="/assets/render-logo-white.svg" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/assets/render-logomark-black.svg" media="(prefers-color-scheme: light)">
+<link rel="icon" href="/assets/render-logomark-white.svg" media="(prefers-color-scheme: dark)">
 <style>${STYLES}</style>
 </head>
 <body>
   <main class="page">
     <header class="masthead">
-      <img class="mark mark--light" src="/assets/render-logo-black.svg" alt="" width="48" height="48" aria-hidden="true">
-      <img class="mark mark--dark" src="/assets/render-logo-white.svg" alt="" width="48" height="48" aria-hidden="true">
-      <h1 class="name">${escapeHtml(model.name)}</h1>
-      <p class="tagline">${escapeHtml(model.tagline)}</p>
+      <h1 class="name"><a class="logo-link" href="${LOGO_HREF}" aria-label="${escapeHtml(model.name)}"><span class="logo"></span></a></h1>
+      <p class="tagline">${taglineHtml}</p>
+${socialsBlock}
     </header>
 
     <section>
@@ -359,9 +390,6 @@ ${socials}
 ${cards}
       </div>
     </section>
-
-${socialsBlock}
-
   </main>
 <script>${ICON_FALLBACK_SCRIPT}</script>
 </body>

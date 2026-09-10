@@ -13,7 +13,6 @@ import { queryDatabase } from "@render-lab/tasks-notion";
 import { extractPageMetadata } from "@render-lab/tasks-scrape";
 import { loadConfig } from "../src/config.js";
 import {
-  applyUtm,
   cardDescription,
   faviconUrl,
   groupByPerson,
@@ -64,7 +63,7 @@ for (const page of pages) {
       .filter((row) => row.kind === "link")
       .map((row): LinkCard => ({
         title: row.title,
-        url: applyUtm(row.url),
+        url: row.url,
         description: descriptions.get(row.url) ?? "",
         iconUrl: faviconUrl(row.url),
       })),

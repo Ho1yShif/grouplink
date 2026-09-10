@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https:; style-src 'sha256-kdnhXhxX5ktzBmDU0eoeJZcyEB6/oj8L1uu4iheb6YQ='; script-src 'sha256-nsmyq4665IeAl+Jlo+x36bCB9QoTOCItVFJQEtSIlhM='; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https:; style-src 'sha256-D/8ICRZyJ5dZWhK5VuPpZKve+TRxSIJEOwrTMVo0grM='; script-src 'sha256-nsmyq4665IeAl+Jlo+x36bCB9QoTOCItVFJQEtSIlhM='; font-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Render — links</title>
 <meta name="description" content="The fastest path to production for full-stack applications and agents">
 <meta property="og:title" content="Render — links">
 <meta property="og:description" content="The fastest path to production for full-stack applications and agents">
 <meta property="og:type" content="website">
-<link rel="icon" href="/assets/render-logo-black.svg" media="(prefers-color-scheme: light)">
-<link rel="icon" href="/assets/render-logo-white.svg" media="(prefers-color-scheme: dark)">
+<link rel="icon" href="/assets/render-logomark-black.svg" media="(prefers-color-scheme: light)">
+<link rel="icon" href="/assets/render-logomark-white.svg" media="(prefers-color-scheme: dark)">
 <style>
 @font-face {
   font-family: 'Roobert';
@@ -86,7 +86,7 @@ body {
 }
 
 .page {
-  max-width: 480px;
+  max-width: 560px;
   margin: 0 auto;
   padding: 96px 32px 64px;
   display: flex;
@@ -100,24 +100,31 @@ body {
   align-items: center;
   text-align: center;
   gap: 16px;
-  /* Adds to the .page gap so the masthead sits further from the links. */
-  margin-bottom: 24px;
+  /* Adds to the .page gap, so the links start further below the socials. */
+  margin-bottom: 48px;
 }
 
-.mark { width: 48px; height: 48px; display: block; }
-.mark--dark { display: none; }
-@media (prefers-color-scheme: dark) {
-  .mark--light { display: none; }
-  .mark--dark { display: block; }
-}
+.name { margin: 0; }
 
-.name {
-  font-family: var(--font-brand);
-  font-weight: 300;
-  font-size: 40px;
-  line-height: 44px;
-  letter-spacing: -0.015em;
-  margin: 0;
+.logo-link {
+  display: block;
+  color: var(--text);
+}
+.logo-link:hover { color: var(--link); }
+.logo-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+/*
+ * The logo file is solid white, so an <img> would vanish on the light
+ * background. It is a mask instead, painted with the text color.
+ */
+.logo {
+  display: block;
+  width: 240px;
+  height: 46px;
+  background-color: currentColor;
+  transition: background-color 150ms var(--ease);
+  -webkit-mask: url('/assets/render-logo-white.png') center / contain no-repeat;
+  mask: url('/assets/render-logo-white.png') center / contain no-repeat;
 }
 
 .tagline {
@@ -169,75 +176,83 @@ body {
 
 .socials {
   display: flex;
+  justify-content: center;
   flex-wrap: wrap;
-  gap: 24px;
-  padding-top: 24px;
-  border-top: 1px solid var(--border);
+  gap: 20px;
+  /* Adds to the .masthead gap, so the icons clear the tagline. */
+  margin-top: 8px;
 }
 
 .social {
+  display: block;
+  color: var(--text);
+  text-decoration: none;
+}
+.social:hover { color: var(--link); }
+.social:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+
+/*
+ * The icon files are solid white, so an <img> would vanish on the light
+ * background. Each one is a mask instead, painted with the text color.
+ */
+.social__icon {
+  display: block;
+  width: 24px;
+  height: 24px;
+  background-color: currentColor;
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
+  transition: background-color 150ms var(--ease);
+}
+
+.social__icon--youtube { --icon: url('/assets/icons/youtube.svg'); }
+.social__icon--linkedin { --icon: url('/assets/icons/linkedin.svg'); }
+.social__icon--x { --icon: url('/assets/icons/x.svg'); }
+.social__icon--github { --icon: url('/assets/icons/github.svg'); }
+.social__icon--discord { --icon: url('/assets/icons/discord.svg'); }
+
+/* A label with no icon file keeps the old wordmark treatment. */
+.social--text {
   font-family: var(--font-mono);
   font-weight: 500;
   font-size: 12px;
-  line-height: 16px;
+  line-height: 24px;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   color: var(--link);
-  text-decoration: none;
-  position: relative;
-  padding-bottom: 2px;
 }
-
-.social::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 1px;
-  background: currentColor;
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 200ms var(--ease);
-}
-.social:hover { color: var(--link-hover); }
-.social:hover::after { transform: scaleX(1); }
-.social:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+.social--text:hover { color: var(--link-hover); }
 
 @media (max-width: 767px) {
   .page { padding: 48px 16px 40px; gap: 32px; }
-  .masthead { margin-bottom: 12px; }
-  .name { font-size: 32px; line-height: 36px; letter-spacing: -0.012em; }
+  .masthead { margin-bottom: 28px; }
+  .logo { width: 190px; height: 36px; }
   .card { min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .card__arrow { transition: none; }
-  .social::after { transition: none; transform: scaleX(0); }
-  .social:hover::after { transform: scaleX(1); }
+  .logo, .social__icon { transition: none; }
 }
 </style>
 </head>
 <body>
   <main class="page">
     <header class="masthead">
-      <img class="mark mark--light" src="/assets/render-logo-black.svg" alt="" width="48" height="48" aria-hidden="true">
-      <img class="mark mark--dark" src="/assets/render-logo-white.svg" alt="" width="48" height="48" aria-hidden="true">
-      <h1 class="name">Render</h1>
-      <p class="tagline">The fastest path to production for full-stack applications and agents</p>
+      <h1 class="name"><a class="logo-link" href="https://dashboard.render.com/" aria-label="Render"><span class="logo"></span></a></h1>
+      <p class="tagline">The fastest path to production<br>for full-stack applications and agents</p>
+      <nav class="socials" aria-label="Social">
+        <a class="social" href="https://www.youtube.com/@render-inc" aria-label="YouTube"><span class="social__icon social__icon--youtube"></span></a>
+        <a class="social" href="https://www.linkedin.com/company/renderco" aria-label="LinkedIn"><span class="social__icon social__icon--linkedin"></span></a>
+        <a class="social" href="https://x.com/render" aria-label="X"><span class="social__icon social__icon--x"></span></a>
+        <a class="social" href="https://github.com/render-oss/sdk" aria-label="GitHub"><span class="social__icon social__icon--github"></span></a>
+        <a class="social" href="https://render.com/discord" aria-label="Discord"><span class="social__icon social__icon--discord"></span></a>
+      </nav>
     </header>
 
     <section>
       <div class="links">
-      <a class="card" href="https://discord.com/invite/gWBFXry3rY">
-        <img class="card__icon" src="https://discord.com/favicon.ico" alt="" loading="lazy">
-        <span>
-          <span class="card__title">Join the Render Developers Discord</span>
-          
-        </span>
-        <span class="card__arrow" aria-hidden="true">&#8594;</span>
-      </a>
-      <a class="card" href="https://render.com/startups?utm_source=linktree&amp;utm_medium=linktree">
+      <a class="card" href="https://render.com/startups">
         <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy">
         <span>
           <span class="card__title">Funded founder? Apply to the Render startup program</span>
@@ -245,7 +260,7 @@ body {
         </span>
         <span class="card__arrow" aria-hidden="true">&#8594;</span>
       </a>
-      <a class="card" href="https://render.com/?utm_source=linktree&amp;utm_medium=linktree">
+      <a class="card" href="https://render.com/">
         <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy">
         <span>
           <span class="card__title">Website</span>
@@ -253,7 +268,7 @@ body {
         </span>
         <span class="card__arrow" aria-hidden="true">&#8594;</span>
       </a>
-      <a class="card" href="https://render.com/tutorials/render-workflows?utm_source=linktree&amp;utm_medium=linktree">
+      <a class="card" href="https://render.com/tutorials/render-workflows">
         <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy">
         <span>
           <span class="card__title">Tutorial | Get started with Render Workflows</span>
@@ -263,13 +278,6 @@ body {
       </a>
       </div>
     </section>
-
-    <nav class="socials" aria-label="Social">
-      <a class="social" href="https://www.youtube.com/@render-inc">YouTube</a>
-      <a class="social" href="https://www.linkedin.com/company/renderco">LinkedIn</a>
-      <a class="social" href="https://x.com/render">X</a>
-    </nav>
-
   </main>
 <script>
 addEventListener('error', function (event) {

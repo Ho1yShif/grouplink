@@ -29,10 +29,6 @@ export interface PersonPage {
   rows: LinkRow[];
 }
 
-/** Hosts that get Render's campaign parameters. */
-const UTM_HOSTS = new Set(["render.com", "www.render.com"]);
-const UTM = { utm_source: "linktree", utm_medium: "linktree" } as const;
-
 function readString(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -107,26 +103,6 @@ export function pagePath(siteDir: string, slug: string): string {
 
 export function visibleInOrder(rows: LinkRow[]): LinkRow[] {
   return rows.filter((row) => row.visible).sort((a, b) => a.order - b.order);
-}
-
-/**
- * The Linktree page shipped `?utm_source=linktree&?utm_medium=referral`. That second
- * `?` means the medium never parses. Build the query with URLSearchParams so it merges
- * with any parameters the row already carries.
- */
-export function applyUtm(rawUrl: string): string {
-  let parsed: URL;
-  try {
-    parsed = new URL(rawUrl);
-  } catch {
-    return rawUrl;
-  }
-  if (!UTM_HOSTS.has(parsed.hostname)) return rawUrl;
-
-  for (const [key, value] of Object.entries(UTM)) {
-    if (!parsed.searchParams.has(key)) parsed.searchParams.set(key, value);
-  }
-  return parsed.toString();
 }
 
 /** Best-effort icon. The card hides the image when this 404s. */

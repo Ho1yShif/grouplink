@@ -2,7 +2,6 @@ import { createHash } from "node:crypto";
 import { describe, expect, it } from "vitest";
 import { escapeHtml, renderPage, safeUrl, type PageModel } from "../src/render.js";
 import {
-  applyUtm,
   faviconUrl,
   groupByPerson,
   toLinkRows,
@@ -49,6 +48,12 @@ describe("renderPage", () => {
     });
     expect(html).not.toContain("javascript:");
     expect(html).toContain('href="#"');
+  });
+
+  it("breaks the tagline on a newline, but keeps the metadata on one line", () => {
+    const html = renderPage({ ...model, tagline: "First half\nsecond half" });
+    expect(html).toContain('<p class="tagline">First half<br>second half</p>');
+    expect(html).toContain('<meta name="description" content="First half second half">');
   });
 
   it("renders the socials block only when there are socials", () => {
@@ -115,24 +120,6 @@ describe("escapeHtml / safeUrl", () => {
     expect(safeUrl("https://render.com/")).toBe("https://render.com/");
     expect(safeUrl("data:text/html,x")).toBe("#");
     expect(safeUrl("not a url")).toBe("#");
-  });
-});
-
-describe("applyUtm", () => {
-  it("adds the corrected parameters to render.com URLs", () => {
-    expect(applyUtm("https://render.com/startups")).toBe(
-      "https://render.com/startups?utm_source=linktree&utm_medium=linktree",
-    );
-  });
-
-  it("leaves other hosts alone", () => {
-    expect(applyUtm("https://discord.com/invite/x")).toBe("https://discord.com/invite/x");
-  });
-
-  it("merges with an existing query string instead of appending a second ?", () => {
-    const out = applyUtm("https://render.com/x?a=1");
-    expect(out).toBe("https://render.com/x?a=1&utm_source=linktree&utm_medium=linktree");
-    expect(out.match(/\?/g)).toHaveLength(1);
   });
 });
 
