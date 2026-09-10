@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https:; style-src 'sha256-D/8ICRZyJ5dZWhK5VuPpZKve+TRxSIJEOwrTMVo0grM='; script-src 'sha256-nsmyq4665IeAl+Jlo+x36bCB9QoTOCItVFJQEtSIlhM='; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https:; style-src 'sha256-/wGlcHz+iuRpnVB682yxpz7MVumuGZQOKSJjaTe68kA='; script-src 'sha256-nsmyq4665IeAl+Jlo+x36bCB9QoTOCItVFJQEtSIlhM='; font-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Render — links</title>
 <meta name="description" content="The fastest path to production for full-stack applications and agents">
 <meta property="og:title" content="Render — links">
@@ -43,6 +43,9 @@
   --link-bg: #e7dbff;
   --accent: #8a05ff;
   --accent-strong: #48008c;
+  /* The hover fill is purple-600 in both themes, so what sits on it is fixed. */
+  --on-accent: #ffffff;
+  --on-accent-faint: #e7dbff;
 
   --font-brand: 'Roobert', 'Manrope', ui-sans-serif, system-ui, sans-serif;
   --font-default: 'PP Neue Montreal', 'Manrope', ui-sans-serif, system-ui, sans-serif;
@@ -95,6 +98,7 @@ body {
 }
 
 .masthead {
+  animation: row-rise 350ms var(--ease) both;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -135,27 +139,109 @@ body {
   max-width: 40ch;
 }
 
-.links { display: flex; flex-direction: column; gap: 12px; }
+.links { border-top: 1px solid var(--border); }
 
 .card {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: 20px 1fr auto;
+  grid-template-columns: 32px 1fr 16px;
   align-items: start;
   gap: 16px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  background: var(--bg);
+  padding: 18px 12px;
+  border-bottom: 1px solid var(--border);
   text-decoration: none;
   color: inherit;
   min-height: 56px;
+  animation: row-rise 350ms var(--ease) both;
+}
+.card:nth-child(1) { animation-delay: 0ms; }
+.card:nth-child(2) { animation-delay: 30ms; }
+.card:nth-child(3) { animation-delay: 60ms; }
+.card:nth-child(4) { animation-delay: 90ms; }
+.card:nth-child(5) { animation-delay: 120ms; }
+.card:nth-child(6) { animation-delay: 150ms; }
+.card:nth-child(7) { animation-delay: 180ms; }
+.card:nth-child(8) { animation-delay: 210ms; }
+.card:nth-child(9) { animation-delay: 240ms; }
+.card:nth-child(10) { animation-delay: 270ms; }
+.card:nth-child(11) { animation-delay: 300ms; }
+.card:nth-child(12) { animation-delay: 330ms; }
+.card:nth-child(13) { animation-delay: 360ms; }
+.card:nth-child(14) { animation-delay: 390ms; }
+.card:nth-child(15) { animation-delay: 420ms; }
+.card:nth-child(16) { animation-delay: 450ms; }
+.card:nth-child(17) { animation-delay: 480ms; }
+.card:nth-child(18) { animation-delay: 510ms; }
+.card:nth-child(19) { animation-delay: 540ms; }
+.card:nth-child(20) { animation-delay: 570ms; }
+
+/*
+ * The signature hover: a purple fill that wipes in left to right, and retreats
+ * the way it came. The origin flips because the un-hover state is the base rule.
+ */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 300ms var(--ease);
+}
+.card:hover::before,
+.card:focus-visible::before {
+  transform: scaleX(1);
+  transform-origin: left;
 }
 
-.card:hover { border-color: var(--text-faint); }
 .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.card__icon { width: 20px; height: 20px; margin-top: 2px; display: block; }
-.card__icon--broken { visibility: hidden; }
-.card__title { font-size: 16px; line-height: 24px; }
+/*
+ * The row's labels flip to their on-purple colors once the fill is under them,
+ * and flip back the instant the pointer leaves, because the fill retreats from
+ * the left and uncovers the text first.
+ */
+.card,
+.card__index,
+.card__desc,
+.card__target { transition: color 0s; }
+
+.card:hover,
+.card:hover .card__index,
+.card:hover .card__desc,
+.card:hover .card__target,
+.card:hover .card__arrow,
+.card:focus-visible,
+.card:focus-visible .card__index,
+.card:focus-visible .card__desc,
+.card:focus-visible .card__target,
+.card:focus-visible .card__arrow { transition-delay: 140ms; }
+
+.card:hover,
+.card:focus-visible { color: var(--on-accent); }
+.card:hover .card__index,
+.card:hover .card__target,
+.card:hover .card__desc,
+.card:hover .card__arrow,
+.card:focus-visible .card__index,
+.card:focus-visible .card__target,
+.card:focus-visible .card__desc,
+.card:focus-visible .card__arrow { color: var(--on-accent-faint); }
+
+.card__index {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 24px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+
+.card__body { display: block; }
+.card__title { display: block; font-size: 16px; line-height: 24px; }
 .card__desc {
   margin: 4px 0 0;
   font-size: 14px;
@@ -167,12 +253,38 @@ body {
   overflow: hidden;
 }
 
+.card__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.card__icon { width: 14px; height: 14px; display: block; flex: none; }
+/* Collapse a favicon that 404s, so the target line closes the gap. */
+.card__icon--broken { display: none; }
+
+.card__target {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.02em;
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+}
+
 .card__arrow {
   color: var(--text-faint);
   line-height: 24px;
-  transition: transform 150ms var(--ease);
+  transition: transform 150ms var(--ease), color 0s;
 }
 .card:hover .card__arrow { transform: translateX(2px); }
+
+@keyframes row-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
 
 .socials {
   display: flex;
@@ -227,11 +339,13 @@ body {
   .page { padding: 48px 16px 40px; gap: 32px; }
   .masthead { margin-bottom: 28px; }
   .logo { width: 190px; height: 36px; }
-  .card { min-height: 44px; }
+  .card { grid-template-columns: 24px 1fr 16px; gap: 12px; padding: 16px 4px; min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card__arrow { transition: none; }
+  .masthead, .card { animation: none; }
+  .card::before, .card__arrow { transition: none; }
+  .card:hover, .card:hover *, .card:focus-visible, .card:focus-visible * { transition-delay: 0s; }
   .logo, .social__icon { transition: none; }
 }
 </style>
@@ -253,26 +367,29 @@ body {
     <section>
       <div class="links">
       <a class="card" href="https://render.com/startups">
-        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy">
-        <span>
+        <span class="card__index" aria-hidden="true">01</span>
+        <span class="card__body">
           <span class="card__title">Funded founder? Apply to the Render startup program</span>
           
+          <span class="card__meta"><img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy"><span class="card__target">render.com/startups</span></span>
         </span>
         <span class="card__arrow" aria-hidden="true">&#8594;</span>
       </a>
       <a class="card" href="https://render.com/">
-        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy">
-        <span>
+        <span class="card__index" aria-hidden="true">02</span>
+        <span class="card__body">
           <span class="card__title">Website</span>
           
+          <span class="card__meta"><img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy"><span class="card__target">render.com</span></span>
         </span>
         <span class="card__arrow" aria-hidden="true">&#8594;</span>
       </a>
       <a class="card" href="https://render.com/tutorials/render-workflows">
-        <img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy">
-        <span>
+        <span class="card__index" aria-hidden="true">03</span>
+        <span class="card__body">
           <span class="card__title">Tutorial | Get started with Render Workflows</span>
           
+          <span class="card__meta"><img class="card__icon" src="https://render.com/favicon.ico" alt="" loading="lazy"><span class="card__target">render.com/tutorials/render-workflows</span></span>
         </span>
         <span class="card__arrow" aria-hidden="true">&#8594;</span>
       </a>

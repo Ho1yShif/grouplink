@@ -59,6 +59,15 @@ export function safeUrl(value: string): string {
   }
 }
 
+/*
+ * Per-row entrance delays. They are generated rather than set inline, because
+ * the policy allows the <style> block by hash and no style attribute at all.
+ */
+const ROW_STAGGER = Array.from(
+  { length: 20 },
+  (_, i) => `.card:nth-child(${i + 1}) { animation-delay: ${i * 30}ms; }`,
+).join("\n");
+
 const STYLES = `
 @font-face {
   font-family: 'Roobert';
@@ -91,6 +100,9 @@ const STYLES = `
   --link-bg: #e7dbff;
   --accent: #8a05ff;
   --accent-strong: #48008c;
+  /* The hover fill is purple-600 in both themes, so what sits on it is fixed. */
+  --on-accent: #ffffff;
+  --on-accent-faint: #e7dbff;
 
   --font-brand: 'Roobert', 'Manrope', ui-sans-serif, system-ui, sans-serif;
   --font-default: 'PP Neue Montreal', 'Manrope', ui-sans-serif, system-ui, sans-serif;
@@ -143,6 +155,7 @@ body {
 }
 
 .masthead {
+  animation: row-rise 350ms var(--ease) both;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -183,27 +196,90 @@ body {
   max-width: 40ch;
 }
 
-.links { display: flex; flex-direction: column; gap: 12px; }
+.links { border-top: 1px solid var(--border); }
 
 .card {
+  position: relative;
+  isolation: isolate;
   display: grid;
-  grid-template-columns: 20px 1fr auto;
+  grid-template-columns: 32px 1fr 16px;
   align-items: start;
   gap: 16px;
-  padding: 16px;
-  border: 1px solid var(--border);
-  background: var(--bg);
+  padding: 18px 12px;
+  border-bottom: 1px solid var(--border);
   text-decoration: none;
   color: inherit;
   min-height: 56px;
+  animation: row-rise 350ms var(--ease) both;
+}
+${ROW_STAGGER}
+
+/*
+ * The signature hover: a purple fill that wipes in left to right, and retreats
+ * the way it came. The origin flips because the un-hover state is the base rule.
+ */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 300ms var(--ease);
+}
+.card:hover::before,
+.card:focus-visible::before {
+  transform: scaleX(1);
+  transform-origin: left;
 }
 
-.card:hover { border-color: var(--text-faint); }
 .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-.card__icon { width: 20px; height: 20px; margin-top: 2px; display: block; }
-.card__icon--broken { visibility: hidden; }
-.card__title { font-size: 16px; line-height: 24px; }
+/*
+ * The row's labels flip to their on-purple colors once the fill is under them,
+ * and flip back the instant the pointer leaves, because the fill retreats from
+ * the left and uncovers the text first.
+ */
+.card,
+.card__index,
+.card__desc,
+.card__target { transition: color 0s; }
+
+.card:hover,
+.card:hover .card__index,
+.card:hover .card__desc,
+.card:hover .card__target,
+.card:hover .card__arrow,
+.card:focus-visible,
+.card:focus-visible .card__index,
+.card:focus-visible .card__desc,
+.card:focus-visible .card__target,
+.card:focus-visible .card__arrow { transition-delay: 140ms; }
+
+.card:hover,
+.card:focus-visible { color: var(--on-accent); }
+.card:hover .card__index,
+.card:hover .card__target,
+.card:hover .card__desc,
+.card:hover .card__arrow,
+.card:focus-visible .card__index,
+.card:focus-visible .card__target,
+.card:focus-visible .card__desc,
+.card:focus-visible .card__arrow { color: var(--on-accent-faint); }
+
+.card__index {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 24px;
+  letter-spacing: 0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-faint);
+}
+
+.card__body { display: block; }
+.card__title { display: block; font-size: 16px; line-height: 24px; }
 .card__desc {
   margin: 4px 0 0;
   font-size: 14px;
@@ -215,12 +291,38 @@ body {
   overflow: hidden;
 }
 
+.card__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.card__icon { width: 14px; height: 14px; display: block; flex: none; }
+/* Collapse a favicon that 404s, so the target line closes the gap. */
+.card__icon--broken { display: none; }
+
+.card__target {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: 0.02em;
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+}
+
 .card__arrow {
   color: var(--text-faint);
   line-height: 24px;
-  transition: transform 150ms var(--ease);
+  transition: transform 150ms var(--ease), color 0s;
 }
 .card:hover .card__arrow { transform: translateX(2px); }
+
+@keyframes row-rise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
+}
 
 .socials {
   display: flex;
@@ -275,11 +377,13 @@ body {
   .page { padding: 48px 16px 40px; gap: 32px; }
   .masthead { margin-bottom: 28px; }
   .logo { width: 190px; height: 36px; }
-  .card { min-height: 44px; }
+  .card { grid-template-columns: 24px 1fr 16px; gap: 12px; padding: 16px 4px; min-height: 44px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .card__arrow { transition: none; }
+  .masthead, .card { animation: none; }
+  .card::before, .card__arrow { transition: none; }
+  .card:hover, .card:hover *, .card:focus-visible, .card:focus-visible * { transition-delay: 0s; }
   .logo, .social__icon { transition: none; }
 }
 `;
@@ -316,20 +420,45 @@ const CSP = [
   "form-action 'none'",
 ].join("; ");
 
-function renderCard(card: LinkCard): string {
+/**
+ * What the row shows as its mono metadata line: host without www, plus the path.
+ * The path is what tells two rows on the same site apart, so it earns its place.
+ * Empty when the URL will not parse.
+ */
+const MAX_TARGET = 44;
+
+function displayTarget(url: string): string {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return "";
+  }
+  const path = parsed.pathname.replace(/\/$/, "");
+  const target = parsed.hostname.replace(/^www\./, "") + path;
+  return target.length > MAX_TARGET ? target.slice(0, MAX_TARGET - 1) + "\u2026" : target;
+}
+
+function renderCard(card: LinkCard, index: number): string {
   const href = escapeHtml(safeUrl(card.url));
   const title = escapeHtml(card.title);
+  const number = String(index + 1).padStart(2, "0");
   const desc = card.description
-    ? `<p class="card__desc">${escapeHtml(card.description)}</p>`
+    ? `<span class="card__desc">${escapeHtml(card.description)}</span>`
     : "";
   const icon = card.iconUrl
     ? `<img class="card__icon" src="${escapeHtml(safeUrl(card.iconUrl))}" alt="" loading="lazy">`
-    : `<span class="card__icon"></span>`;
+    : "";
+  const target = displayTarget(card.url);
+  const meta = target
+    ? `<span class="card__meta">${icon}<span class="card__target">${escapeHtml(target)}</span></span>`
+    : "";
   return `      <a class="card" href="${href}">
-        ${icon}
-        <span>
+        <span class="card__index" aria-hidden="true">${number}</span>
+        <span class="card__body">
           <span class="card__title">${title}</span>
           ${desc}
+          ${meta}
         </span>
         <span class="card__arrow" aria-hidden="true">&#8594;</span>
       </a>`;
@@ -354,7 +483,7 @@ function renderSocial(social: SocialLink): string {
 export function renderPage(model: PageModel): string {
   const taglineText = model.tagline.replace(/\s*\r?\n\s*/g, " ").trim();
   const taglineHtml = escapeHtml(model.tagline.trim()).replace(/\r?\n/g, "<br>");
-  const cards = model.cards.map(renderCard).join("\n");
+  const cards = model.cards.map((card, i) => renderCard(card, i)).join("\n");
   const socials = model.socials.map(renderSocial).join("\n");
   const socialsBlock = socials
     ? `      <nav class="socials" aria-label="Social">
