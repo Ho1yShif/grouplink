@@ -100,9 +100,7 @@ const STYLES = `
   --link-bg: #e7dbff;
   --accent: #8a05ff;
   --accent-strong: #48008c;
-  /* The hover fill is purple-600 in both themes, so what sits on it is fixed. */
-  --on-accent: #ffffff;
-  --on-accent-faint: #e7dbff;
+  --row-hover: rgba(0, 0, 0, 0.03);
 
   --font-brand: 'Roobert', 'Manrope', ui-sans-serif, system-ui, sans-serif;
   --font-default: 'PP Neue Montreal', 'Manrope', ui-sans-serif, system-ui, sans-serif;
@@ -126,6 +124,7 @@ const STYLES = `
     --link-bg: #48008c;
     --accent: #8a05ff;
     --accent-strong: #c29eff;
+    --row-hover: rgba(255, 255, 255, 0.04);
   }
 }
 
@@ -199,8 +198,6 @@ body {
 .links { border-top: 1px solid var(--border); }
 
 .card {
-  position: relative;
-  isolation: isolate;
   display: grid;
   grid-template-columns: 32px 1fr 16px;
   align-items: start;
@@ -214,59 +211,9 @@ body {
 }
 ${ROW_STAGGER}
 
-/*
- * The signature hover: a purple fill that wipes in left to right, and retreats
- * the way it came. The origin flips because the un-hover state is the base rule.
- */
-.card::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background: var(--accent);
-  transform: scaleX(0);
-  transform-origin: right;
-  transition: transform 300ms var(--ease);
-}
-.card:hover::before,
-.card:focus-visible::before {
-  transform: scaleX(1);
-  transform-origin: left;
-}
-
-.card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-
-/*
- * The row's labels flip to their on-purple colors once the fill is under them,
- * and flip back the instant the pointer leaves, because the fill retreats from
- * the left and uncovers the text first.
- */
-.card,
-.card__index,
-.card__desc,
-.card__target { transition: color 0s; }
-
 .card:hover,
-.card:hover .card__index,
-.card:hover .card__desc,
-.card:hover .card__target,
-.card:hover .card__arrow,
-.card:focus-visible,
-.card:focus-visible .card__index,
-.card:focus-visible .card__desc,
-.card:focus-visible .card__target,
-.card:focus-visible .card__arrow { transition-delay: 140ms; }
-
-.card:hover,
-.card:focus-visible { color: var(--on-accent); }
-.card:hover .card__index,
-.card:hover .card__target,
-.card:hover .card__desc,
-.card:hover .card__arrow,
-.card:focus-visible .card__index,
-.card:focus-visible .card__target,
-.card:focus-visible .card__desc,
-.card:focus-visible .card__arrow { color: var(--on-accent-faint); }
+.card:focus-visible { background: var(--row-hover); }
+.card:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 
 .card__index {
   font-family: var(--font-mono);
@@ -279,7 +226,29 @@ ${ROW_STAGGER}
 }
 
 .card__body { display: block; }
-.card__title { display: block; font-size: 16px; line-height: 24px; }
+
+/*
+ * The signature link hover: a purple underline that wipes in left to right and
+ * retreats the way it came. It is a background rather than a border or a
+ * pseudo-element, so it follows the title onto a second line. The rest position
+ * is the right edge, which is where the wipe retreats to; the jump back is
+ * invisible because the underline has no width by then.
+ */
+.card__title {
+  display: inline;
+  font-size: 16px;
+  line-height: 24px;
+  background-image: linear-gradient(var(--link), var(--link));
+  background-repeat: no-repeat;
+  background-position: right bottom;
+  background-size: 0% 1px;
+  transition: background-size 200ms var(--ease);
+}
+.card:hover .card__title,
+.card:focus-visible .card__title {
+  background-position: left bottom;
+  background-size: 100% 1px;
+}
 .card__desc {
   margin: 4px 0 0;
   font-size: 14px;
@@ -382,8 +351,7 @@ ${ROW_STAGGER}
 
 @media (prefers-reduced-motion: reduce) {
   .masthead, .card { animation: none; }
-  .card::before, .card__arrow { transition: none; }
-  .card:hover, .card:hover *, .card:focus-visible, .card:focus-visible * { transition-delay: 0s; }
+  .card__title, .card__arrow { transition: none; }
   .logo, .social__icon { transition: none; }
 }
 `;
