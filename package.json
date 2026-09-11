@@ -8,7 +8,6 @@
     "dev": "tsx src/main.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/main.js",
-    "trigger:cron": "node dist/cron-trigger.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:live": "RUN_LIVE=1 vitest run test/rebuild.live.test.ts",

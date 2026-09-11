@@ -1,7 +1,7 @@
 # Blueprint for everything except the Workflow: the static site the page is served
-# from, the Key Value instance that caches scraped metadata, and the cron job that
-# starts the rebuild every three hours. Blueprints don't support Workflows yet, so
-# create the Workflow service in the Dashboard and set its env vars there — including
+# from, the Key Value instance that caches scraped metadata, and the web service
+# Notion's webhook posts to. Blueprints don't support Workflows yet, so create the
+# Workflow service in the Dashboard and set its env vars there — including
 # REDIS_URL, copied from this Key Value instance's internal connection string.
 #
 # Order: apply this Blueprint, create the Workflow, then set WORKFLOW_SLUG and
@@ -30,17 +30,19 @@ projects:
                 name: Cache-Control
                 value: public, max-age=31536000, immutable
 
-          - type: cron
-            name: grouplink-rebuild
+          # Notion posts here on every edit; the receiver debounces and starts one
+          # grouplink.rebuild run. On the starter plan so it is always on — a free
+          # instance spins down after 15 minutes idle, and this is the only trigger.
+          - type: web
+            name: grouplink-webhook
             runtime: node
             plan: starter
             region: oregon
-            # Every three hours. A run with nothing to publish commits nothing, and the
-            # metadata cache holds 24h, so the extra runs cost little beyond health checks.
-            schedule: "0 */3 * * *"
             buildCommand: pnpm install --frozen-lockfile && pnpm build
-            startCommand: node dist/cron-trigger.js
+            startCommand: node dist/webhook.js
+            healthCheckPath: /healthz
             autoDeployTrigger: commit
+            # Without this the receiver redeploys every time a run commits a page.
             buildFilter:
               paths:
                 - src/**
@@ -52,8 +54,16 @@ projects:
                 sync: false
               - key: WORKFLOW_SLUG
                 sync: false
-              - key: CRON_TASK
+              # Verification token of the Notion subscription. Unset until the
+              # handshake lands; see the README.
+              - key: NOTION_WEBHOOK_SECRET
+                sync: false
+              - key: DISPATCH_TOKEN
+                generateValue: true
+              - key: REBUILD_TASK
                 value: grouplink.rebuild
+              - key: DEBOUNCE_MS
+                value: "60000"
 
           - type: keyvalue
             name: grouplink-cache
