@@ -38,9 +38,17 @@ The health check counts a link as dead when it answers 404, 5xx, or nothing at a
 A 401, 403, 405, 429, or 999 means the site is up and refusing a request with no
 browser fingerprint, which is what X and LinkedIn do.
 
-If the run itself fails, it posts the error to Slack and rethrows. The cron job
-exits as soon as it has dispatched the run, so its exit code says nothing about
-the outcome.
+A run starts when someone edits Notion. `grouplink-webhook` is a small web
+service that verifies Notion's signature, drops the event types that can't
+change a page, and waits 60 seconds of quiet before dispatching
+`grouplink.rebuild`. Editing eight rows in one sitting gives you one run.
+
+There is no schedule. The run is also what health-checks every link, so a link
+that rots is only reported the next time someone edits Notion.
+
+If the run itself fails, it posts the error to Slack and rethrows. The receiver
+has already answered Notion by then, so its response says nothing about how the
+run went.
 
 `DRY_RUN=true` is the default. A dry run reads, scrapes, caches, and health-checks,
 then returns the model without committing or deploying.
@@ -125,7 +133,7 @@ Reading a relation needs `@render-lab/tasks-notion` 0.6.0 or later.
 | `NOTION_LINKS_DATABASE_ID` | — | The links database. |
 | `NOTION_PEOPLE_DATABASE_ID` | — | The people database. |
 | `REDIS_URL` | — | Key Value instance holding the metadata cache. |
-| `GITHUB_TOKEN` | — | Needs `contents:write` on this repo. |
+| `GITHUB_TOKEN` | — | Write access to the site repo. See below. |
 | `GITHUB_REPO_OWNER` / `GITHUB_REPO_NAME` | — | Where the page is committed. |
 | `GITHUB_BRANCH` | `main` | Branch to commit to. |
 | `RENDER_API_KEY` | — | Used to trigger the static site deploy. |
@@ -138,9 +146,57 @@ Reading a relation needs `@render-lab/tasks-notion` 0.6.0 or later.
 | `METADATA_TTL_SECONDS` | `86400` | How long a scraped description is cached. |
 | `LINKS_LIMIT` | `100` | Notion rows to read per run. |
 
+The webhook receiver reads its own set, plus `RENDER_API_KEY`:
+
+| Var | Default | Purpose |
+| --- | --- | --- |
+| `WORKFLOW_SLUG` | — | Slug of the Workflow service to dispatch to. |
+| `NOTION_WEBHOOK_SECRET` | — | Verification token of the Notion subscription. |
+| `DISPATCH_TOKEN` | — | Bearer token required on `POST /tasks/:task`. |
+| `REBUILD_TASK` | `grouplink.rebuild` | Task the webhook dispatches. |
+| `DEBOUNCE_MS` | `60000` | Quiet period before an edit starts a run. |
+
 Each page's name and tagline come from its People row, not from configuration.
 
 Per-run overrides go in the input: `--input='[{"dryRun":false}]'`.
+
+### The GitHub token
+
+`GITHUB_TOKEN` is the only credential that writes to a repo. `github.commitFiles`
+uses it once per run, to write the changed pages to `GITHUB_BRANCH` of
+`GITHUB_REPO_OWNER/GITHUB_REPO_NAME`. The run also reads the branch's tree and
+the pages already on it to work out which ones changed, and read access to the
+contents covers that too.
+
+The value goes straight to Octokit as a bearer credential, and nothing inspects
+its shape, so all three GitHub token types work. Test with a personal access
+token and run an installation token in production. Only the value changes.
+
+| Token type | What it needs |
+| --- | --- |
+| Fine-grained PAT | Repository access limited to the site repo, and `Contents` → **Read and write**. GitHub adds the required `Metadata` → **Read** on its own. Leave everything else at no access. GitHub caps expiration at one year unless your org allows longer. |
+| Classic PAT | `repo` for a private repo, `public_repo` for a public one. Both grant more than the run needs. |
+| GitHub App installation token | Install the app on the site repo with `Contents: Read and write`, then mint an installation token. |
+
+An installation token expires after an hour, so a value pasted into the
+environment stops working before the next edit arrives. Something has to mint a
+fresh one and update `GITHUB_TOKEN` on the Workflow service through the Render
+API. A fine-grained PAT needs no refresh.
+
+If the repo belongs to an org, an org owner has to approve a fine-grained token
+before it can write.
+
+Branch protection can reject a token that has the right permission. The commit is
+a fast-forward ref update, so a rule on `GITHUB_BRANCH` requiring a pull request
+or a passing status check turns it down. Exempt the token, or point
+`GITHUB_BRANCH` at an unprotected branch.
+
+An expired or revoked token fails the run at `github.commitFiles`, and that error
+goes to Slack. No other step needs GitHub, so the only other symptom is a page
+that stops updating.
+
+The token belongs on the Workflow service. `grouplink-webhook` never calls
+GitHub, so don't set it there.
 
 ## The page
 
@@ -165,12 +221,16 @@ from `/` and from `/<slug>/`.
 
 ## Deploy
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Ho1yShif/grouplink)
+
 Blueprints don't support Workflows yet, so the Workflow service is created in the
 Dashboard and everything else comes from [`render.yaml`](render.yaml).
 
-1. Dashboard → **New > Blueprint**, link this repo. It creates the static site
-   (`grouplink-site`), the Key Value instance (`grouplink-cache`), and the
-   cron job (`grouplink-rebuild`). Note the static site's ID and URL.
+1. Click the button, or Dashboard → **New > Blueprint** and link this repo. It
+   creates the static site (`grouplink-site`), the Key Value instance
+   (`grouplink-cache`), and the webhook receiver (`grouplink-webhook`). Note the
+   static site's ID and URL. The button reads `render.yaml` from `main`, so push
+   first.
 2. Dashboard → **New > Workflow** on the same repo.
    Build: `pnpm install && pnpm build`. Start: `node dist/main.js`. Turn
    auto-deploy off — the workflow commits to this repo, and you don't want it
@@ -178,11 +238,48 @@ Dashboard and everything else comes from [`render.yaml`](render.yaml).
 3. Set the env vars above on the Workflow, including `REDIS_URL` from the Key
    Value instance's internal connection string. Keep `DRY_RUN=true` for the first
    deploy. Confirm the tasks appear on the service's Tasks page and note the slug.
-4. Set `WORKFLOW_SLUG` and `RENDER_API_KEY` on the cron job.
-5. Flip `DRY_RUN=false` and trigger a run.
+4. Set `WORKFLOW_SLUG` and `RENDER_API_KEY` on `grouplink-webhook` and deploy it.
+   Leave `NOTION_WEBHOOK_SECRET` unset for now.
+5. Create the Notion subscription and finish the handshake, below.
+6. Flip `DRY_RUN=false` and edit a row in Notion.
 
 `autoDeploy` is off on the static site because the workflow triggers its deploy
 itself, right after committing.
+
+### The Notion subscription
+
+In the Notion integration's **Webhooks** tab, create a subscription pointing at
+`https://grouplink-webhook.onrender.com/webhooks/notion` and subscribe to these
+event types:
+
+`page.created`, `page.deleted`, `page.undeleted`, `page.properties_updated`,
+`page.content_updated`, `data_source.content_updated`,
+`data_source.schema_updated`
+
+Saving the form makes Notion post a one-time verification token to the receiver.
+That request has no signature, and it arrives before there is a secret to check
+it against, so the receiver accepts unsigned bodies while
+`NOTION_WEBHOOK_SECRET` is unset and logs the token. Read the token out of the
+receiver's logs, paste it into the Notion form, then set the same value as
+`NOTION_WEBHOOK_SECRET` on the receiver. From then on every request needs a
+valid `X-Notion-Signature`.
+
+The receiver filters on event type alone. Under Notion API version 2025-09-03 an
+event's `data.parent.id` is a data source ID rather than the database ID in
+`NOTION_LINKS_DATABASE_ID`, so filtering on the ID would drop every event. Share
+the integration with the two databases and nothing else.
+
+### Forcing a run
+
+`POST /tasks/grouplink.rebuild` on the receiver starts a run without waiting for
+a Notion edit, and takes the same run input the CLI does:
+
+```bash
+curl -X POST https://grouplink-webhook.onrender.com/tasks/grouplink.rebuild \
+  -H "Authorization: Bearer $DISPATCH_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '[{"dryRun":true}]'
+```
 
 ## Tests
 
