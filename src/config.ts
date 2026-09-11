@@ -46,7 +46,8 @@ function envFlag(value: string | undefined, fallback: boolean): boolean {
   return !FALSY.has(normalized);
 }
 
-function envInt(value: string | undefined, fallback: number): number {
+/** Shared with the webhook receiver, which parses its own DEBOUNCE_MS and PORT. */
+export function envInt(value: string | undefined, fallback: number): number {
   const parsed = Number.parseInt(value ?? "", 10);
   return Number.isFinite(parsed) ? parsed : fallback;
 }

@@ -17,6 +17,7 @@
     "serve": "tsx --watch scripts/serve.ts"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.1",
     "@render-lab/tasks-github": "0.8.0",
     "@render-lab/tasks-http": "0.2.0",
     "@render-lab/tasks-notion": "0.5.0",
