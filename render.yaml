@@ -47,6 +47,7 @@ projects:
               paths:
                 - src/**
                 - package.json
+                - .node-version
                 - pnpm-lock.yaml
                 - render.yaml
             envVars:
