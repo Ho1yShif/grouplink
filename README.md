@@ -230,24 +230,32 @@ The Blueprint comes first even though the receiver needs the Workflow's slug,
 because the Workflow needs `REDIS_URL` from the Key Value instance and
 `RENDER_STATIC_SITE_ID` from the static site, and the Blueprint creates both.
 `grouplink-webhook` fails its first deploy as a result: it exits at startup
-while `WORKFLOW_SLUG` is empty, and step 4 is what fixes it.
+while `WORKFLOW_SLUG` is empty, and step 5 is what fixes it.
 
-1. Click the button, or Dashboard → **New > Blueprint** and link this repo. It
+1. Create the Notion integration at
+   [notion.so/profile/integrations](https://www.notion.so/profile/integrations).
+   Internal integration, in the workspace holding the two databases, with read
+   content capability. Copy its internal integration secret — that is
+   `NOTION_TOKEN`. Open each database, then **⋯ > Connections > Connect to**,
+   and connect the integration to the links database and the people database.
+   You can't create `NOTION_WEBHOOK_SECRET` here. Notion generates it when you
+   save the subscription in step 6, which needs the receiver's URL.
+2. Click the button, or Dashboard → **New > Blueprint** and link this repo. It
    creates the static site (`grouplink-site`), the Key Value instance
    (`grouplink-cache`), and the webhook receiver (`grouplink-webhook`). Leave
    `WORKFLOW_SLUG` blank when it prompts. Note the static site's ID and URL. The
    button reads `render.yaml` from `main`, so push first.
-2. Dashboard → **New > Workflow** on the same repo.
+3. Dashboard → **New > Workflow** on the same repo.
    Build: `pnpm install && pnpm build`. Start: `node dist/main.js`. Turn
    auto-deploy off — the workflow commits to this repo, and you don't want it
    redeploying itself every time the page changes.
-3. Set the env vars above on the Workflow, including `REDIS_URL` from the Key
+4. Set the env vars above on the Workflow, including `REDIS_URL` from the Key
    Value instance's internal connection string. Keep `DRY_RUN=true` for the first
    deploy. Confirm the tasks appear on the service's Tasks page and note the slug.
-4. Set `WORKFLOW_SLUG` and `RENDER_API_KEY` on `grouplink-webhook` and redeploy
+5. Set `WORKFLOW_SLUG` and `RENDER_API_KEY` on `grouplink-webhook` and redeploy
    it. Leave `NOTION_WEBHOOK_SECRET` unset for now.
-5. Create the Notion subscription and finish the handshake, below.
-6. Flip `DRY_RUN=false` and edit a row in Notion.
+6. Create the Notion subscription and finish the handshake, below.
+7. Flip `DRY_RUN=false` and edit a row in Notion.
 
 `autoDeploy` is off on the static site because the workflow triggers its deploy
 itself, right after committing.
