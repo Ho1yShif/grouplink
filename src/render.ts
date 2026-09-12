@@ -154,7 +154,7 @@ body {
 }
 
 .masthead {
-  animation: row-rise 350ms var(--ease) both;
+  animation: row-fade 350ms var(--ease) both;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -207,7 +207,7 @@ body {
   text-decoration: none;
   color: inherit;
   min-height: 56px;
-  animation: row-rise 350ms var(--ease) both;
+  animation: row-fade 350ms var(--ease) both;
 }
 ${ROW_STAGGER}
 
@@ -288,9 +288,9 @@ ${ROW_STAGGER}
 }
 .card:hover .card__arrow { transform: translateX(2px); }
 
-@keyframes row-rise {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
+@keyframes row-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .socials {

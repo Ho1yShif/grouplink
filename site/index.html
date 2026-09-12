@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https:; style-src 'sha256-rN01dQPUxGXn2lQtvm/rOVeEtRE7akfTJBeQ8SIjtKA='; script-src 'sha256-nsmyq4665IeAl+Jlo+x36bCB9QoTOCItVFJQEtSIlhM='; font-src 'self'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self' https:; style-src 'sha256-UxkixkPAKhdWpGRvU0GLLekalN5pzLAQL87/3DgO0Yo='; script-src 'sha256-nsmyq4665IeAl+Jlo+x36bCB9QoTOCItVFJQEtSIlhM='; font-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Render Links</title>
 <meta name="description" content="The fastest path to production for full-stack applications and agents">
 <meta property="og:title" content="Render — links">
@@ -97,7 +97,7 @@ body {
 }
 
 .masthead {
-  animation: row-rise 350ms var(--ease) both;
+  animation: row-fade 350ms var(--ease) both;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -150,7 +150,7 @@ body {
   text-decoration: none;
   color: inherit;
   min-height: 56px;
-  animation: row-rise 350ms var(--ease) both;
+  animation: row-fade 350ms var(--ease) both;
 }
 .card:nth-child(1) { animation-delay: 0ms; }
 .card:nth-child(2) { animation-delay: 30ms; }
@@ -250,9 +250,9 @@ body {
 }
 .card:hover .card__arrow { transform: translateX(2px); }
 
-@keyframes row-rise {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
+@keyframes row-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .socials {
