@@ -342,21 +342,30 @@ exists and you know its hostname.
    ```
 
    Pick the links and people databases, and approve. The browser lands on the
-   receiver's 404 page. Copy `<CODE>` out of the `?code=` parameter in the
-   address bar.
+   receiver's 404 page. Copy the `?code=` parameter out of the address bar. It
+   is a UUID, and it is good for one attempt within ten minutes.
 
-6. Exchange the code within ten minutes:
+6. Exchange the code. Set all three variables first, and keep the JSON in double
+   quotes so the shell expands `$CODE` — single quotes send the literal text and
+   Notion answers `Auth code must be a valid UUID`.
 
    ```bash
+   CLIENT_ID=<client id from step 3>
+   CLIENT_SECRET=<client secret from step 3>
+   CODE=<code from step 5>
+
    curl -X POST https://api.notion.com/v1/oauth/token \
      -u "$CLIENT_ID:$CLIENT_SECRET" \
      -H "Content-Type: application/json" \
-     -d '{
-       "grant_type": "authorization_code",
-       "code": "<CODE>",
-       "redirect_uri": "https://grouplink-webhook.onrender.com/oauth"
-     }'
+     -d "{
+       \"grant_type\": \"authorization_code\",
+       \"code\": \"$CODE\",
+       \"redirect_uri\": \"https://grouplink-webhook.onrender.com/oauth\"
+     }"
    ```
+
+   Re-run the authorization URL for a fresh code if the exchange fails for any
+   reason.
 
    The `access_token` in the response is `NOTION_TOKEN`. Set it on the Workflow
    at step 4. A public connection has no installation access token, and the
