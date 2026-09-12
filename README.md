@@ -232,14 +232,24 @@ because the Workflow needs `REDIS_URL` from the Key Value instance and
 `grouplink-webhook` fails its first deploy as a result: it exits at startup
 while `WORKFLOW_SLUG` is empty, and step 5 is what fixes it.
 
-1. Create the Notion integration at
-   [notion.so/profile/integrations](https://www.notion.so/profile/integrations).
-   Internal integration, in the workspace holding the two databases, with read
-   content capability. Copy its internal integration secret — that is
-   `NOTION_TOKEN`. Open each database, then **⋯ > Connections > Connect to**,
-   and connect the integration to the links database and the people database.
-   You can't create `NOTION_WEBHOOK_SECRET` here. Notion generates it when you
-   save the subscription in step 6, which needs the receiver's URL.
+1. Create the Notion connection. You have to be a workspace owner; if you
+   aren't, read [Using a public connection](#using-a-public-connection) below.
+   - Go to
+     [notion.so/profile/integrations](https://www.notion.so/profile/integrations)
+     and click **+ New connection**.
+   - Name it `grouplink`, pick the workspace holding the two databases, and
+     leave the type as **Internal**.
+   - Under **Capabilities**, keep **Read content** and turn off insert and
+     update content. The run only calls `queryDatabase`.
+   - Under **User information**, pick **No user information**.
+   - Save, then copy the **Internal Integration Secret**. That is
+     `NOTION_TOKEN`.
+   - Open the links database in Notion, click **⋯** in the top right, then
+     **Connections > Connect to**, and pick `grouplink`. Repeat on the people
+     database. The connection reads nothing you haven't connected it to.
+
+   `NOTION_WEBHOOK_SECRET` isn't created here. Notion generates it when you save
+   the subscription in step 6, which needs the receiver's URL.
 2. Click the button, or Dashboard → **New > Blueprint** and link this repo. It
    creates the static site (`grouplink-site`), the Key Value instance
    (`grouplink-cache`), and the webhook receiver (`grouplink-webhook`). Leave
@@ -282,6 +292,43 @@ The receiver filters on event type alone. Under Notion API version 2025-09-03 an
 event's `data.parent.id` is a data source ID rather than the database ID in
 `NOTION_LINKS_DATABASE_ID`, so filtering on the ID would drop every event. Share
 the integration with the two databases and nothing else.
+
+### Using a public connection
+
+Creating an internal connection requires workspace owner rights. A public
+connection doesn't, so that is the way in if you're a member rather than an
+owner. It runs the same code — `@render-lab/tasks-notion` sends whatever is in
+`NOTION_TOKEN` as a bearer token, and doesn't care where it came from.
+
+1. Create the connection as above, but set the type to **Public**, and fill in
+   the required company name, homepage, privacy policy, and terms URLs. Set the
+   redirect URI to `http://localhost:3000/oauth` — nothing has to listen there.
+2. Copy the **OAuth client ID** and **OAuth client secret**.
+3. Open
+   `https://api.notion.com/v1/oauth/authorize?client_id=<CLIENT_ID>&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth`
+   in a browser, pick the links and people databases, and approve. The browser
+   lands on a dead localhost URL with `?code=<CODE>` in the address bar. Copy the
+   code.
+4. Exchange it within ten minutes:
+
+   ```bash
+   curl -X POST https://api.notion.com/v1/oauth/token \
+     -u "$CLIENT_ID:$CLIENT_SECRET" \
+     -H "Content-Type: application/json" \
+     -d '{"grant_type":"authorization_code","code":"<CODE>","redirect_uri":"http://localhost:3000/oauth"}'
+   ```
+
+   The `access_token` in the response is `NOTION_TOKEN`.
+
+Two things differ from the internal path. You choose which pages the connection
+can read during the authorization flow rather than through **⋯ > Connections**,
+so re-run the flow to add a database later. And the response also carries a
+`refresh_token`, because Notion can rotate these tokens. Keep the client ID,
+client secret, and refresh token somewhere you can find them, so a run that
+starts failing with a 401 at `notion.queryDatabase` is a token exchange away
+from working again.
+
+The Webhooks tab works the same either way.
 
 ### Forcing a run
 
