@@ -242,8 +242,9 @@ while `WORKFLOW_SLUG` is empty, and step 5 is what fixes it.
    - Under **Capabilities**, keep **Read content** and turn off insert and
      update content. The run only calls `queryDatabase`.
    - Under **User information**, pick **No user information**.
-   - Save, then copy the **Internal Integration Secret**. That is
-     `NOTION_TOKEN`.
+   - Save, then open the **Configuration** tab and copy the **Installation
+     access token**. It starts with `ntn_` and is `NOTION_TOKEN`. Older docs
+     call it the Internal Integration Secret.
    - Open the links database in Notion, click **⋯** in the top right, then
      **Connections > Connect to**, and pick `grouplink`. Repeat on the people
      database. The connection reads nothing you haven't connected it to.
@@ -336,7 +337,9 @@ exists and you know its hostname.
    ```
 
    The `access_token` in the response is `NOTION_TOKEN`. Set it on the Workflow
-   at step 4.
+   at step 4. A public connection has no installation access token, and the
+   OAuth client secret is not a substitute — it only authenticates this
+   exchange.
 
 Two things differ from the internal path. You choose which pages the connection
 can read during the authorization flow rather than through **⋯ > Connections**,
