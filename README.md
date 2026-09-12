@@ -273,21 +273,29 @@ itself, right after committing.
 
 ### The Notion subscription
 
-In the Notion integration's **Webhooks** tab, create a subscription pointing at
-`https://grouplink-webhook.onrender.com/webhooks/notion` and subscribe to these
-event types:
+`NOTION_WEBHOOK_SECRET` doesn't exist anywhere until you create the
+subscription. Notion mints it and posts it to the receiver, so the Configuration
+tab won't show it and there is nothing to look up in advance.
 
-`page.created`, `page.deleted`, `page.undeleted`, `page.properties_updated`,
-`page.content_updated`, `data_source.content_updated`,
-`data_source.schema_updated`
-
-Saving the form makes Notion post a one-time verification token to the receiver.
-That request has no signature, and it arrives before there is a secret to check
-it against, so the receiver accepts unsigned bodies while
-`NOTION_WEBHOOK_SECRET` is unset and logs the token. Read the token out of the
-receiver's logs, paste it into the Notion form, then set the same value as
-`NOTION_WEBHOOK_SECRET` on the receiver. From then on every request needs a
-valid `X-Notion-Signature`.
+1. Open the connection's **Webhooks** tab — a separate tab from
+   **Configuration** — and click **+ Create a subscription**.
+2. Set the webhook URL to
+   `https://grouplink-webhook.onrender.com/webhooks/notion`.
+3. Subscribe to `page.created`, `page.deleted`, `page.undeleted`,
+   `page.properties_updated`, `page.content_updated`,
+   `data_source.content_updated`, and `data_source.schema_updated`.
+4. Click **Create subscription**. Notion immediately posts a one-time
+   `verification_token` to the receiver. That request carries no signature, and
+   it arrives before there is a secret to check it against, so the receiver
+   accepts unsigned bodies while `NOTION_WEBHOOK_SECRET` is unset and logs the
+   token.
+5. Find the line `notion verification_token: ntn_...` in the receiver's logs on
+   Render and copy the value.
+6. Back on the Webhooks tab, click the **Verify** button next to the
+   subscription, paste the token, and confirm.
+7. Set the same value as `NOTION_WEBHOOK_SECRET` on `grouplink-webhook`. It
+   redeploys, and from then on every request needs a valid
+   `X-Notion-Signature`.
 
 The receiver filters on event type alone. Under Notion API version 2025-09-03 an
 event's `data.parent.id` is a data source ID rather than the database ID in
@@ -314,7 +322,12 @@ exists and you know its hostname.
    `http://localhost` URI can't be entered. Register one redirect URI and no
    more; a second one changes whether `redirect_uri` is required later.
 3. Copy the **OAuth client ID** and **OAuth client secret**.
-4. Open this in a browser, with the client ID filled in:
+4. Check **Installation scope**. The workspace holding the two databases has to
+   be on the list of workspaces allowed to install the connection, and a new
+   connection starts out limited to your development workspace.
+5. Open the **Authorization URL** from the Configuration tab in a browser. It is
+   already built for you, client ID and redirect URI included, and looks like
+   this:
 
    ```
    https://api.notion.com/v1/oauth/authorize?client_id=<CLIENT_ID>&response_type=code&owner=user&redirect_uri=https%3A%2F%2Fgrouplink-webhook.onrender.com%2Foauth
@@ -323,7 +336,7 @@ exists and you know its hostname.
    Pick the links and people databases, and approve. The browser lands on the
    receiver's 404 page. Copy `<CODE>` out of the `?code=` parameter in the
    address bar.
-5. Exchange the code within ten minutes:
+6. Exchange the code within ten minutes:
 
    ```bash
    curl -X POST https://api.notion.com/v1/oauth/token \
