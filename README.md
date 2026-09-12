@@ -268,9 +268,20 @@ while `WORKFLOW_SLUG` is empty, and step 5 is what fixes it.
    Build: `pnpm install && pnpm build`. Start: `node dist/main.js`. Turn
    auto-deploy off — the workflow commits to this repo, and you don't want it
    redeploying itself every time the page changes.
-4. Set the env vars above on the Workflow, including `REDIS_URL` from the Key
-   Value instance's internal connection string. Keep `DRY_RUN=true` for the first
-   deploy. Confirm the tasks appear on the service's Tasks page and note the slug.
+4. Set the [Configuration](#configuration) vars on the Workflow. The webhook
+   receiver's table doesn't apply here. Required:
+   - `NOTION_TOKEN`, `NOTION_LINKS_DATABASE_ID`, `NOTION_PEOPLE_DATABASE_ID`.
+   - `GITHUB_TOKEN`, `GITHUB_REPO_OWNER`, `GITHUB_REPO_NAME`. See
+     [The GitHub token](#the-github-token).
+   - `REDIS_URL`, the internal connection string of `grouplink-cache`.
+   - `RENDER_API_KEY` and `RENDER_STATIC_SITE_ID`, the ID you noted at step 2.
+   - `SITE_URL` and `SITE_DEFAULT_SLUG`.
+   - `DRY_RUN=true` for the first deploy.
+
+   Optional: `SLACK_WEBHOOK_URL`, plus `GITHUB_BRANCH`, `SITE_DIR`,
+   `METADATA_TTL_SECONDS`, and `LINKS_LIMIT` if the defaults don't suit.
+
+   Confirm the tasks appear on the service's Tasks page and note the slug.
 5. Set `WORKFLOW_SLUG` and `RENDER_API_KEY` on `grouplink-webhook` and redeploy
    it. Leave `NOTION_WEBHOOK_SECRET` unset for now.
 6. Create the Notion subscription and finish the handshake, below.
