@@ -221,7 +221,7 @@ from `/` and from `/<slug>/`.
 
 ## Deploy
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Ho1yShif/grouplink)
+![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/Ho1yShif/grouplink)
 
 Blueprints don't support Workflows yet, so the Workflow service is created in the
 Dashboard and everything else comes from [`render.yaml`](render.yaml).
@@ -381,6 +381,9 @@ starts failing with a 401 at `notion.queryDatabase` is a token exchange away
 from working again.
 
 The Webhooks tab works the same either way.
+
+You are done here. Go back to [Deploy](#deploy) and pick up at step 3, the
+Workflow service. The `access_token` goes in as `NOTION_TOKEN` at step 4.
 
 ### Forcing a run
 
