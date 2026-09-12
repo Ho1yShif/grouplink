@@ -300,25 +300,43 @@ connection doesn't, so that is the way in if you're a member rather than an
 owner. It runs the same code — `@render-lab/tasks-notion` sends whatever is in
 `NOTION_TOKEN` as a bearer token, and doesn't care where it came from.
 
-1. Create the connection as above, but set the type to **Public**, and fill in
-   the required company name, homepage, privacy policy, and terms URLs. Set the
-   redirect URI to `http://localhost:3000/oauth` — nothing has to listen there.
-2. Copy the **OAuth client ID** and **OAuth client secret**.
-3. Open
-   `https://api.notion.com/v1/oauth/authorize?client_id=<CLIENT_ID>&response_type=code&owner=user&redirect_uri=http%3A%2F%2Flocalhost%3A3000%2Foauth`
-   in a browser, pick the links and people databases, and approve. The browser
-   lands on a dead localhost URL with `?code=<CODE>` in the address bar. Copy the
-   code.
-4. Exchange it within ten minutes:
+Do the first part with step 1 and the rest after step 2, once the receiver
+exists and you know its hostname.
+
+1. Create the connection as above, but set the type to **Public**. Notion asks
+   for a company name, a homepage URL, a privacy policy URL, and a terms URL,
+   and any reachable page satisfies all four.
+2. Set the redirect URI to `https://grouplink-webhook.onrender.com/oauth`,
+   substituting the receiver's real hostname if Render had to suffix the name.
+   Nothing serves that path, so the redirect 404s and the code stays in the
+   address bar. The form prepends `https://` to whatever you type, so a
+   `http://localhost` URI can't be entered. Register one redirect URI and no
+   more; a second one changes whether `redirect_uri` is required later.
+3. Copy the **OAuth client ID** and **OAuth client secret**.
+4. Open this in a browser, with the client ID filled in:
+
+   ```
+   https://api.notion.com/v1/oauth/authorize?client_id=<CLIENT_ID>&response_type=code&owner=user&redirect_uri=https%3A%2F%2Fgrouplink-webhook.onrender.com%2Foauth
+   ```
+
+   Pick the links and people databases, and approve. The browser lands on the
+   receiver's 404 page. Copy `<CODE>` out of the `?code=` parameter in the
+   address bar.
+5. Exchange the code within ten minutes:
 
    ```bash
    curl -X POST https://api.notion.com/v1/oauth/token \
      -u "$CLIENT_ID:$CLIENT_SECRET" \
      -H "Content-Type: application/json" \
-     -d '{"grant_type":"authorization_code","code":"<CODE>","redirect_uri":"http://localhost:3000/oauth"}'
+     -d '{
+       "grant_type": "authorization_code",
+       "code": "<CODE>",
+       "redirect_uri": "https://grouplink-webhook.onrender.com/oauth"
+     }'
    ```
 
-   The `access_token` in the response is `NOTION_TOKEN`.
+   The `access_token` in the response is `NOTION_TOKEN`. Set it on the Workflow
+   at step 4.
 
 Two things differ from the internal path. You choose which pages the connection
 can read during the authorization flow rather than through **⋯ > Connections**,
