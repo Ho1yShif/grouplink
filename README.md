@@ -69,7 +69,7 @@ render workflows tasks list --local
 render workflows start grouplink.rebuild --local --input='[{"dryRun":true}]'
 ```
 
-### See the page on localhost
+### Previewing the page
 
 `pnpm preview` reads both Notion databases, scrapes each card's description, and
 writes one `site/<slug>/index.html` per person plus the root copy. It needs
