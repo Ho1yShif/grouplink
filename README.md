@@ -282,9 +282,11 @@ while `WORKFLOW_SLUG` is empty, and step 5 is what fixes it.
    `METADATA_TTL_SECONDS`, and `LINKS_LIMIT` if the defaults don't suit.
 
    Confirm the tasks appear on the service's Tasks page and note the slug.
+
 5. Set `WORKFLOW_SLUG` and `RENDER_API_KEY` on `grouplink-webhook` and redeploy
    it. Leave `NOTION_WEBHOOK_SECRET` unset for now.
-6. Create the Notion subscription and finish the handshake, below.
+6. Create the Notion subscription and finish the handshake. See
+   [The Notion subscription](#the-notion-subscription).
 7. Flip `DRY_RUN=false` and edit a row in Notion.
 
 `autoDeploy` is off on the static site because the workflow triggers its deploy
@@ -299,8 +301,9 @@ tab won't show it and there is nothing to look up in advance.
 1. Open the connection's **Webhooks** tab — a separate tab from
    **Configuration** — and click **+ Create a subscription**.
 2. Set the webhook URL to
-   `https://grouplink-webhook.onrender.com/webhooks/notion`.
-3. Subscribe to `page.created`, `page.deleted`, `page.undeleted`,
+   `https://grouplink-webhook.onrender.com/webhooks/notion`. You may need to append your slug to this URL
+3. Click the minus sign to unsubscribe from all events so you can select only the ones you need.
+   Subscribe to `page.created`, `page.deleted`, `page.undeleted`,
    `page.properties_updated`, `page.content_updated`,
    `data_source.content_updated`, and `data_source.schema_updated`.
 4. Click **Create subscription**. Notion immediately posts a one-time
@@ -312,9 +315,8 @@ tab won't show it and there is nothing to look up in advance.
    Render and copy the value.
 6. Back on the Webhooks tab, click the **Verify** button next to the
    subscription, paste the token, and confirm.
-7. Set the same value as `NOTION_WEBHOOK_SECRET` on `grouplink-webhook`. It
-   redeploys, and from then on every request needs a valid
-   `X-Notion-Signature`.
+7. Set the same value as `NOTION_WEBHOOK_SECRET` on `grouplink-webhook` and redeploy.
+   From then on every request needs a valid `X-Notion-Signature`.
 
 The receiver filters on event type alone. Under Notion API version 2025-09-03 an
 event's `data.parent.id` is a data source ID rather than the database ID in
