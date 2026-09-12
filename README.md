@@ -226,11 +226,17 @@ from `/` and from `/<slug>/`.
 Blueprints don't support Workflows yet, so the Workflow service is created in the
 Dashboard and everything else comes from [`render.yaml`](render.yaml).
 
+The Blueprint comes first even though the receiver needs the Workflow's slug,
+because the Workflow needs `REDIS_URL` from the Key Value instance and
+`RENDER_STATIC_SITE_ID` from the static site, and the Blueprint creates both.
+`grouplink-webhook` fails its first deploy as a result: it exits at startup
+while `WORKFLOW_SLUG` is empty, and step 4 is what fixes it.
+
 1. Click the button, or Dashboard → **New > Blueprint** and link this repo. It
    creates the static site (`grouplink-site`), the Key Value instance
-   (`grouplink-cache`), and the webhook receiver (`grouplink-webhook`). Note the
-   static site's ID and URL. The button reads `render.yaml` from `main`, so push
-   first.
+   (`grouplink-cache`), and the webhook receiver (`grouplink-webhook`). Leave
+   `WORKFLOW_SLUG` blank when it prompts. Note the static site's ID and URL. The
+   button reads `render.yaml` from `main`, so push first.
 2. Dashboard → **New > Workflow** on the same repo.
    Build: `pnpm install && pnpm build`. Start: `node dist/main.js`. Turn
    auto-deploy off — the workflow commits to this repo, and you don't want it
@@ -238,8 +244,8 @@ Dashboard and everything else comes from [`render.yaml`](render.yaml).
 3. Set the env vars above on the Workflow, including `REDIS_URL` from the Key
    Value instance's internal connection string. Keep `DRY_RUN=true` for the first
    deploy. Confirm the tasks appear on the service's Tasks page and note the slug.
-4. Set `WORKFLOW_SLUG` and `RENDER_API_KEY` on `grouplink-webhook` and deploy it.
-   Leave `NOTION_WEBHOOK_SECRET` unset for now.
+4. Set `WORKFLOW_SLUG` and `RENDER_API_KEY` on `grouplink-webhook` and redeploy
+   it. Leave `NOTION_WEBHOOK_SECRET` unset for now.
 5. Create the Notion subscription and finish the handshake, below.
 6. Flip `DRY_RUN=false` and edit a row in Notion.
 
