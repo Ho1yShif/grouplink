@@ -78,7 +78,7 @@ export function loadConfig(
     databaseId,
     peopleDatabaseId,
     limit: input.limit ?? envInt(env.LINKS_LIMIT, 100),
-    dryRun: input.dryRun ?? envFlag(env.DRY_RUN, true),
+    dryRun: input.dryRun ?? envFlag(env.DRY_RUN, false),
 
     defaultSlug,
 

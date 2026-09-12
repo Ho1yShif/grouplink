@@ -11,8 +11,8 @@ const ENV = {
 const load = (extra: Record<string, string> = {}) => loadConfig({}, { ...ENV, ...extra });
 
 describe("loadConfig", () => {
-  it("defaults dryRun to true, so an unconfigured run cannot publish", () => {
-    expect(load().dryRun).toBe(true);
+  it("defaults dryRun to false, so a run publishes unless it is held back", () => {
+    expect(load().dryRun).toBe(false);
   });
 
   it("reads DRY_RUN whatever the casing and spacing", () => {
@@ -25,8 +25,8 @@ describe("loadConfig", () => {
   });
 
   it("falls back when DRY_RUN is empty or whitespace", () => {
-    expect(load({ DRY_RUN: "" }).dryRun).toBe(true);
-    expect(load({ DRY_RUN: "   " }).dryRun).toBe(true);
+    expect(load({ DRY_RUN: "" }).dryRun).toBe(false);
+    expect(load({ DRY_RUN: "   " }).dryRun).toBe(false);
   });
 
   it("prefers the run input over the env", () => {

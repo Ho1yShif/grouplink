@@ -50,8 +50,8 @@ If the run itself fails, it posts the error to Slack and rethrows. The receiver
 has already answered Notion by then, so its response says nothing about how the
 run went.
 
-`DRY_RUN=true` is the default. A dry run reads, scrapes, caches, and health-checks,
-then returns the model without committing or deploying.
+A run commits and deploys unless you set `DRY_RUN=true`. A dry run reads, scrapes,
+caches, and health-checks, then returns the model without writing anything.
 
 ## Run it locally
 
@@ -140,7 +140,7 @@ Reading a relation needs `@render-lab/tasks-notion` 0.6.0 or later.
 | `RENDER_STATIC_SITE_ID`                  | —       | The static site to deploy.                      |
 | `SITE_URL`                               | —       | Public URL, quoted in the Slack message.        |
 | `SLACK_WEBHOOK_URL`                      | —       | Optional. Unset logs the digest to the console. |
-| `DRY_RUN`                                | `true`  | Set `false` to commit and deploy.               |
+| `DRY_RUN`                                | `false` | Set `true` to skip the commit and the deploy.   |
 | `SITE_DEFAULT_SLUG`                      | —       | Slug of the person the root page shows.         |
 | `SITE_DIR`                               | `site`  | Directory the pages are committed under.        |
 | `METADATA_TTL_SECONDS`                   | `86400` | How long a scraped description is cached.       |
@@ -276,7 +276,8 @@ while `WORKFLOW_SLUG` is empty, and step 5 is what fixes it.
    - `REDIS_URL`, the internal connection string of `grouplink-cache`.
    - `RENDER_API_KEY` and `RENDER_STATIC_SITE_ID`, the ID you noted at step 2.
    - `SITE_URL` and `SITE_DEFAULT_SLUG`.
-   - `DRY_RUN=true` for the first deploy.
+   - `DRY_RUN=true` for the first deploy, so a misconfigured run can't publish.
+     The default is `false`.
 
    Optional: `SLACK_WEBHOOK_URL`, plus `GITHUB_BRANCH`, `SITE_DIR`,
    `METADATA_TTL_SECONDS`, and `LINKS_LIMIT` if the defaults don't suit.
@@ -287,7 +288,7 @@ while `WORKFLOW_SLUG` is empty, and step 5 is what fixes it.
    it. Leave `NOTION_WEBHOOK_SECRET` unset for now.
 6. Create the Notion subscription and finish the handshake. See
    [The Notion subscription](#the-notion-subscription).
-7. Flip `DRY_RUN=false` and edit a row in Notion.
+7. Remove `DRY_RUN` or set it to `false`, then edit a row in Notion.
 
 `autoDeploy` is off on the static site because the workflow triggers its deploy
 itself, right after committing.
