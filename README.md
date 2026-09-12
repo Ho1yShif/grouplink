@@ -96,23 +96,23 @@ touching Notion, for looking at the design before the databases exist.
 
 There are two. Links:
 
-| Property | Type | Purpose |
-| --- | --- | --- |
-| `Title` | title | Card text. Not scraped — this is the copy you control. |
-| `URL` | url | Where the card points. |
-| `Order` | number | Sort order. Rows without one sort last. |
-| `Visible` | checkbox | Unchecked rows are dropped. |
-| `Kind` | select | `Link` renders a card, `Social` renders in the mono row. |
-| `Everyone` | checkbox | Checked puts the link on every person's page. |
-| `People` | relation | Which pages the link appears on. Relate it to two rows and it appears on both. |
+| Property   | Type     | Purpose                                                                        |
+| ---------- | -------- | ------------------------------------------------------------------------------ |
+| `Title`    | title    | Card text. Not scraped — this is the copy you control.                         |
+| `URL`      | url      | Where the card points.                                                         |
+| `Order`    | number   | Sort order. Rows without one sort last.                                        |
+| `Visible`  | checkbox | Unchecked rows are dropped.                                                    |
+| `Kind`     | select   | `Link` renders a card, `Social` renders in the mono row.                       |
+| `Everyone` | checkbox | Checked puts the link on every person's page.                                  |
+| `People`   | relation | Which pages the link appears on. Relate it to two rows and it appears on both. |
 
 People:
 
-| Property | Type | Purpose |
-| --- | --- | --- |
-| `Name` | title | The heading on that person's page. |
-| `Slug` | text | The URL path. `shifra` serves at `/shifra`. |
-| `Tagline` | text | The line under the name. |
+| Property  | Type  | Purpose                                     |
+| --------- | ----- | ------------------------------------------- |
+| `Name`    | title | The heading on that person's page.          |
+| `Slug`    | text  | The URL path. `shifra` serves at `/shifra`. |
+| `Tagline` | text  | The line under the name.                    |
 
 A link's audience is `Everyone` plus whatever `People` names. A row with both set
 is redundant, not contradictory, and a row with neither renders nowhere.
@@ -127,34 +127,34 @@ Reading a relation needs `@render-lab/tasks-notion` 0.6.0 or later.
 
 ## Configuration
 
-| Var | Default | Purpose |
-| --- | --- | --- |
-| `NOTION_TOKEN` | — | Notion integration token. |
-| `NOTION_LINKS_DATABASE_ID` | — | The links database. |
-| `NOTION_PEOPLE_DATABASE_ID` | — | The people database. |
-| `REDIS_URL` | — | Key Value instance holding the metadata cache. |
-| `GITHUB_TOKEN` | — | Write access to the site repo. See below. |
-| `GITHUB_REPO_OWNER` / `GITHUB_REPO_NAME` | — | Where the page is committed. |
-| `GITHUB_BRANCH` | `main` | Branch to commit to. |
-| `RENDER_API_KEY` | — | Used to trigger the static site deploy. |
-| `RENDER_STATIC_SITE_ID` | — | The static site to deploy. |
-| `SITE_URL` | — | Public URL, quoted in the Slack message. |
-| `SLACK_WEBHOOK_URL` | — | Optional. Unset logs the digest to the console. |
-| `DRY_RUN` | `true` | Set `false` to commit and deploy. |
-| `SITE_DEFAULT_SLUG` | — | Slug of the person the root page shows. |
-| `SITE_DIR` | `site` | Directory the pages are committed under. |
-| `METADATA_TTL_SECONDS` | `86400` | How long a scraped description is cached. |
-| `LINKS_LIMIT` | `100` | Notion rows to read per run. |
+| Var                                      | Default | Purpose                                         |
+| ---------------------------------------- | ------- | ----------------------------------------------- |
+| `NOTION_TOKEN`                           | —       | Notion integration token.                       |
+| `NOTION_LINKS_DATABASE_ID`               | —       | The links database.                             |
+| `NOTION_PEOPLE_DATABASE_ID`              | —       | The people database.                            |
+| `REDIS_URL`                              | —       | Key Value instance holding the metadata cache.  |
+| `GITHUB_TOKEN`                           | —       | Write access to the site repo. See below.       |
+| `GITHUB_REPO_OWNER` / `GITHUB_REPO_NAME` | —       | Where the page is committed.                    |
+| `GITHUB_BRANCH`                          | `main`  | Branch to commit to.                            |
+| `RENDER_API_KEY`                         | —       | Used to trigger the static site deploy.         |
+| `RENDER_STATIC_SITE_ID`                  | —       | The static site to deploy.                      |
+| `SITE_URL`                               | —       | Public URL, quoted in the Slack message.        |
+| `SLACK_WEBHOOK_URL`                      | —       | Optional. Unset logs the digest to the console. |
+| `DRY_RUN`                                | `true`  | Set `false` to commit and deploy.               |
+| `SITE_DEFAULT_SLUG`                      | —       | Slug of the person the root page shows.         |
+| `SITE_DIR`                               | `site`  | Directory the pages are committed under.        |
+| `METADATA_TTL_SECONDS`                   | `86400` | How long a scraped description is cached.       |
+| `LINKS_LIMIT`                            | `100`   | Notion rows to read per run.                    |
 
 The webhook receiver reads its own set, plus `RENDER_API_KEY`:
 
-| Var | Default | Purpose |
-| --- | --- | --- |
-| `WORKFLOW_SLUG` | — | Slug of the Workflow service to dispatch to. |
-| `NOTION_WEBHOOK_SECRET` | — | Verification token of the Notion subscription. |
-| `DISPATCH_TOKEN` | — | Bearer token required on `POST /tasks/:task`. |
-| `REBUILD_TASK` | `grouplink.rebuild` | Task the webhook dispatches. |
-| `DEBOUNCE_MS` | `60000` | Quiet period before an edit starts a run. |
+| Var                     | Default             | Purpose                                        |
+| ----------------------- | ------------------- | ---------------------------------------------- |
+| `WORKFLOW_SLUG`         | —                   | Slug of the Workflow service to dispatch to.   |
+| `NOTION_WEBHOOK_SECRET` | —                   | Verification token of the Notion subscription. |
+| `DISPATCH_TOKEN`        | —                   | Bearer token required on `POST /tasks/:task`.  |
+| `REBUILD_TASK`          | `grouplink.rebuild` | Task the webhook dispatches.                   |
+| `DEBOUNCE_MS`           | `60000`             | Quiet period before an edit starts a run.      |
 
 Each page's name and tagline come from its People row, not from configuration.
 
@@ -172,11 +172,11 @@ The value goes straight to Octokit as a bearer credential, and nothing inspects
 its shape, so all three GitHub token types work. Test with a personal access
 token and run an installation token in production. Only the value changes.
 
-| Token type | What it needs |
-| --- | --- |
-| Fine-grained PAT | Repository access limited to the site repo, and `Contents` → **Read and write**. GitHub adds the required `Metadata` → **Read** on its own. Leave everything else at no access. GitHub caps expiration at one year unless your org allows longer. |
-| Classic PAT | `repo` for a private repo, `public_repo` for a public one. Both grant more than the run needs. |
-| GitHub App installation token | Install the app on the site repo with `Contents: Read and write`, then mint an installation token. |
+| Token type                    | What it needs                                                                                                                                                                                                                                     |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fine-grained PAT              | Repository access limited to the site repo, and `Contents` → **Read and write**. GitHub adds the required `Metadata` → **Read** on its own. Leave everything else at no access. GitHub caps expiration at one year unless your org allows longer. |
+| Classic PAT                   | `repo` for a private repo, `public_repo` for a public one. Both grant more than the run needs.                                                                                                                                                    |
+| GitHub App installation token | Install the app on the site repo with `Contents: Read and write`, then mint an installation token.                                                                                                                                                |
 
 An installation token expires after an hour, so a value pasted into the
 environment stops working before the next edit arrives. Something has to mint a
@@ -232,25 +232,33 @@ because the Workflow needs `REDIS_URL` from the Key Value instance and
 `grouplink-webhook` fails its first deploy as a result: it exits at startup
 while `WORKFLOW_SLUG` is empty, and step 5 is what fixes it.
 
-1. Create the Notion connection. You have to be a workspace owner; if you
-   aren't, read [Using a public connection](#using-a-public-connection) below.
-   - Go to
-     [notion.so/profile/integrations](https://www.notion.so/profile/integrations)
-     and click **+ New connection**.
-   - Name it `grouplink`, pick the workspace holding the two databases, and
-     leave the type as **Internal**.
-   - Under **Capabilities**, keep **Read content** and turn off insert and
-     update content. The run only calls `queryDatabase`.
+1. Create the Notion connection at
+   [notion.so/profile/integrations](https://www.notion.so/profile/integrations).
+   Click **+ New connection** and name it `grouplink`. Set the capabilities,
+   which are the same for both connection types:
+   - Under **Capabilities** in the **Content capabilities** section, keep **Read
+     content** and uncheck insert and update content. The run only calls
+     `queryDatabase`.
    - Under **User information**, pick **No user information**.
-   - Save, then open the **Configuration** tab and copy the **Installation
-     access token**. It starts with `ntn_` and is `NOTION_TOKEN`. Older docs
-     call it the Internal Integration Secret.
+
+   Then pick a type. **OAuth** works for any Notion account:
+   - There is no installation access token and no **⋯ > Connections** step. The
+     token comes from a code exchange, and you choose the databases during the
+     authorization flow.
+   - Follow [Using a public connection](#using-a-public-connection) below, then
+     come back here for step 2.
+
+   **Internal** is shorter but needs workspace owner rights:
+   - Open the **Configuration** tab and copy the **Installation access token**.
+     It starts with `ntn_` and is `NOTION_TOKEN`. Older docs call it the
+     Internal Integration Secret.
    - Open the links database in Notion, click **⋯** in the top right, then
      **Connections > Connect to**, and pick `grouplink`. Repeat on the people
      database. The connection reads nothing you haven't connected it to.
 
-   `NOTION_WEBHOOK_SECRET` isn't created here. Notion generates it when you save
-   the subscription in step 6, which needs the receiver's URL.
+   `NOTION_WEBHOOK_SECRET` isn't part of either path. Notion generates it when
+   you save the subscription in step 6, which needs the receiver's URL.
+
 2. Click the button, or Dashboard → **New > Blueprint** and link this repo. It
    creates the static site (`grouplink-site`), the Key Value instance
    (`grouplink-cache`), and the webhook receiver (`grouplink-webhook`). Leave
@@ -336,6 +344,7 @@ exists and you know its hostname.
    Pick the links and people databases, and approve. The browser lands on the
    receiver's 404 page. Copy `<CODE>` out of the `?code=` parameter in the
    address bar.
+
 6. Exchange the code within ten minutes:
 
    ```bash
